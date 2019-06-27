@@ -1,0 +1,6 @@
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.pbf
+venv
