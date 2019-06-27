@@ -67,6 +67,28 @@ class Geopackage:
         self.polygon_layer = None
         self.ds = None
 
+class Kml:
+    def __init__(self,name):
+        driver = ogr.GetDriverByName('LIBKML')
+        self.ds = driver.CreateDataSource(name + '.kml')
+        self.point_layer = self.ds.CreateLayer('points', None, ogr.wkbPoint)
+        self.line_layer = self.ds.CreateLayer('lines', None, ogr.wkbLineString)
+        self.polygon_layer = self.ds.CreateLayer('polygons', None, ogr.wkbMultiPolygon)
+
+    def write_point(self,geom):
+        feat = ogr.Feature(self.point_layer.GetLayerDefn())
+        feat.SetGeometry(geom)
+        self.point_layer.CreateFeature(feat)
+
+    def write_line(self,geom):
+        feat = ogr.Feature(self.line_layer.GetLayerDefn())
+        feat.SetGeometry(geom)
+        self.line_layer.CreateFeature(feat)
+
+    def write_polygon(self,geom):
+        feat = ogr.Feature(self.polygon_layer.GetLayerDefn())
+        feat.SetGeometry(geom)
+        self.polygon_layer.CreateFeature(feat)
 
 class Handler(o.SimpleHandler):
     def __init__(self,outputs):
@@ -99,7 +121,8 @@ def main(osmfile):
     start_time = time.time()
     gpkg = Geopackage(sys.argv[2])
     shp = Shapefile(sys.argv[2])
-    h = Handler([gpkg])
+    kml = Kml(sys.argv[2])
+    h = Handler([kml])
     h.apply_file(osmfile, locations=True)
     gpkg.finalize()
     print(time.time() - start_time)
