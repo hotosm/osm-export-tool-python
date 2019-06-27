@@ -69,11 +69,13 @@ class Geopackage:
 
 class Kml:
     def __init__(self,name):
-        driver = ogr.GetDriverByName('LIBKML')
-        self.ds = driver.CreateDataSource(name + '.kml')
-        self.point_layer = self.ds.CreateLayer('points', None, ogr.wkbPoint)
-        self.line_layer = self.ds.CreateLayer('lines', None, ogr.wkbLineString)
-        self.polygon_layer = self.ds.CreateLayer('polygons', None, ogr.wkbMultiPolygon)
+        driver = ogr.GetDriverByName('KML') # LIBKML has heavy memory usage
+        self.point_ds = driver.CreateDataSource(name + '_points.kml')
+        self.point_layer = self.point_ds.CreateLayer('points',None,ogr.wkbPoint)
+        self.line_ds = driver.CreateDataSource(name + '_lines.kml')
+        self.line_layer = self.line_ds.CreateLayer('lines',None,ogr.wkbLineString)
+        self.polygon_ds = driver.CreateDataSource(name + '_polygons.kml')
+        self.polygon_layer = self.polygon_ds.CreateLayer('polygons',None,ogr.wkbMultiPolygon)
 
     def write_point(self,geom):
         feat = ogr.Feature(self.point_layer.GetLayerDefn())
