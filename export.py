@@ -104,10 +104,13 @@ class Handler(o.SimpleHandler):
                 output.write_point(geom)
 
     def way(self, w):
-        if len(w.tags) > 0:
-            geom = create_geom(fab.create_linestring(w))
-            for output in self.outputs:
-                output.write_line(geom)
+        if len(w.tags) > 0 and len(w.nodes) > 1:
+            try:
+                geom = create_geom(fab.create_linestring(w))
+                for output in self.outputs:
+                    output.write_line(geom)
+            except RuntimeError:
+                print("Incomplete way: {0}".format(w.id))
 
     def area(self,a):
         try:
@@ -125,7 +128,7 @@ def main(osmfile):
     shp = Shapefile(sys.argv[2])
     kml = Kml(sys.argv[2])
     h = Handler([kml])
-    h.apply_file(osmfile, locations=True)
+    h.apply_file(osmfile, locations=True, idx='sparse_file_array')
     gpkg.finalize()
     print(time.time() - start_time)
 
