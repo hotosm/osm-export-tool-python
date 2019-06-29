@@ -2,6 +2,12 @@
 
 > This project is under development. For the previous version of the Export Tool, see [hotosm/osm-export-tool](https://github.com/hotosm/osm-export-tool/tree/master/ops).
 
+## Example usage
+
+```
+osm-export-tool jakarta.osm.pbf jakarta -f gpkg,shp
+```
+
 Input formats:
 * OSM PBF
 * OSM XML
