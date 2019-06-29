@@ -1,0 +1,20 @@
+#!/usr/bin/python
+import sys
+import time
+
+from osm_export_tool import export
+
+if len(sys.argv) != 3:
+    print("Usage: %s <osmfile> <name>" % sys.argv[0])
+    sys.exit(-1)
+
+start_time = time.time()
+gpkg = export.Geopackage(sys.argv[2])
+shp = export.Shapefile(sys.argv[2])
+kml = export.Kml(sys.argv[2])
+h = export.Handler([kml])
+h.apply_file(sys.argv[1], locations=True, idx='sparse_file_array')
+gpkg.finalize()
+print(time.time() - start_time)
+
+exit(0)

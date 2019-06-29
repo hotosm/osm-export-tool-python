@@ -3,4 +3,9 @@
 *.shx
 *.dbf
 *.pbf
+*.pyc
+*.egg-info
 venv
+build
+dist
+files

@@ -4,9 +4,7 @@ try:
 except ModuleNotFoundError:
     print('ERROR: Install the version of python package GDAL that corresponds to gdalinfo --version on your system.')
     exit(1)
-import sys
 from base64 import b64decode
-import time
 
 fab = o.geom.WKBFactory()
 create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
@@ -122,19 +120,3 @@ class Handler(o.SimpleHandler):
             print('Invalid area: {0}'.format(a.orig_id()))
 
 
-def main(osmfile):
-    start_time = time.time()
-    gpkg = Geopackage(sys.argv[2])
-    shp = Shapefile(sys.argv[2])
-    kml = Kml(sys.argv[2])
-    h = Handler([kml])
-    h.apply_file(osmfile, locations=True, idx='sparse_file_array')
-    gpkg.finalize()
-    print(time.time() - start_time)
-
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print("Usage: python %s <osmfile> <name>" % sys.argv[0])
-        sys.exit(-1)
-
-    exit(main(sys.argv[1]))
