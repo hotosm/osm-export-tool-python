@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="osm-export-tool",
-    version="0.0.1",
+    version="0.0.2",
     author="Brandon Liu",
     author_email="brandon.liu@hotosm.org",
     description="Convert OpenStreetMap data into GIS and mobile mapping file formats.",
@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: BSD License",
+        'License :: OSI Approved :: BSD 3-Clause "New" or "Revised" License (BSD-3-Clause)',
         "Operating System :: OS Independent",
     ],
     scripts=['bin/osm-export-tool']
