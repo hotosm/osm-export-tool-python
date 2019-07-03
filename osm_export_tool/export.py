@@ -34,6 +34,9 @@ class Shapefile:
         feat.SetGeometry(geom)
         self.polygon_layer.CreateFeature(feat)
 
+    def finalize(self):
+        pass
+
 class Geopackage:
     def __init__(self,name):
         driver = ogr.GetDriverByName('GPKG')
@@ -89,6 +92,9 @@ class Kml:
         feat = ogr.Feature(self.polygon_layer.GetLayerDefn())
         feat.SetGeometry(geom)
         self.polygon_layer.CreateFeature(feat)
+
+    def finalize(self):
+        pass
 
 class Handler(o.SimpleHandler):
     def __init__(self,outputs):
