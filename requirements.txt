@@ -1,1 +1,3 @@
 osmium==2.15.2
+pyparsing==2.4.0
+pyyaml==5.1.1
