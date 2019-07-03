@@ -5,7 +5,7 @@ import unicodedata
 from yaml.constructor import ConstructorError
 from yaml.scanner import ScannerError
 from yaml.parser import ParserError
-from osm_export_tool.feature_selection.sql import SQLValidator, OverpassFilter
+from osm_export_tool.sql import SQLValidator, OverpassFilter
 
 def slugify(s):
     """
@@ -21,22 +21,7 @@ def slugify(s):
 
 class FeatureSelection(object):
     """ A feature selection object:
-    * filters and selects OSM tags.
-    * is a first-class object in the Export Tool.
-    ( pass this around to other objects )
-    * serializes as YAML.
-    * describes a set of tables to create in a Geopackage database.
     """
-    @staticmethod
-    def example_raw(filename):
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        return open(os.path.join(dir_path,'examples',filename+".yml")).read()
-
-    @staticmethod
-    def example(filename):
-        f = FeatureSelection(FeatureSelection.example_raw(filename))
-        assert f.valid
-        return f
 
     def __init__(self,raw_doc):
         self._raw_doc = raw_doc
@@ -119,6 +104,11 @@ class FeatureSelection(object):
             self._errors.append(e.problem)
             # add exceptions
             #self._valid = (self._yaml != None)
+
+    def match(self,tags,geom_type):
+        if len(tags) > 0:
+            return ['buildings']
+        return []
 
 
     @property
