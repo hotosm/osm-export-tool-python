@@ -5,16 +5,10 @@ except ModuleNotFoundError:
     print('ERROR: Install the version of python package GDAL that corresponds to gdalinfo --version on your system.')
     exit(1)
 from base64 import b64decode
+from osm_export_tool import GeomType
 
 fab = o.geom.WKBFactory()
 create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
-
-from enum import Enum
-
-class GeomType(Enum):
-    POINT = 1
-    LINE = 2
-    POLYGON = 3
 
 class Shapefile:
     class Layer:
@@ -27,13 +21,17 @@ class Shapefile:
             self.ogr_layer.CreateField(field_name)
             self.defn = self.ogr_layer.GetLayerDefn()
 
-    def __init__(self,name):
+    def __init__(self,output_name,mapping):
         driver = ogr.GetDriverByName('ESRI Shapefile')
 
         self.layers = {}
-        self.layers[('buildings',GeomType.POINT)] = Shapefile.Layer(driver,'buildings_points',ogr.wkbPoint)
-        self.layers[('buildings',GeomType.LINE)] = Shapefile.Layer(driver,'buildings_lines',ogr.wkbLineString)
-        self.layers[('buildings',GeomType.POLYGON)] = Shapefile.Layer(driver,'buildings_polygons',ogr.wkbMultiPolygon)
+        for theme in mapping.themes:
+            if 'points' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + theme + '_points',ogr.wkbPoint)
+            if 'lines' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + theme + '_lines',ogr.wkbLineString)
+            if 'polygons' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + theme + '_polygons',ogr.wkbMultiPolygon)
 
     def write(self,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
@@ -57,14 +55,21 @@ class Geopackage:
             self.ogr_layer.CreateField(field_name)
             self.defn = self.ogr_layer.GetLayerDefn()
 
-    def __init__(self,name):
+    def __init__(self,output_name,mapping):
         driver = ogr.GetDriverByName('GPKG')
-        self.ds = driver.CreateDataSource(name + '.gpkg')
+        self.ds = driver.CreateDataSource(output_name + '.gpkg')
         self.ds.StartTransaction()
+
         self.layers = {}
-        self.layers[('buildings',GeomType.POINT)] = Geopackage.Layer(self.ds,'buildings_points',ogr.wkbPoint)
-        self.layers[('buildings',GeomType.LINE)] = Geopackage.Layer(self.ds,'buildings_lines',ogr.wkbLineString)
-        self.layers[('buildings',GeomType.POLYGON)] = Geopackage.Layer(self.ds,'buildings_polygons',ogr.wkbMultiPolygon)
+        for theme in mapping.themes:
+            if 'points' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.POINT)] = Geopackage.Layer(self.ds,theme + '_points',ogr.wkbPoint)
+            if 'lines' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.LINE)] = Geopackage.Layer(self.ds,theme + '_lines',ogr.wkbLineString)
+            if 'polygons' in mapping.geom_types(theme):
+                self.layers[(theme,GeomType.POLYGON)] = Geopackage.Layer(self.ds,theme + '_polygons',ogr.wkbMultiPolygon)
+
+        print(self.layers)
 
     def write(self,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]

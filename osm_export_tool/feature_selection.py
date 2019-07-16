@@ -6,6 +6,7 @@ from yaml.constructor import ConstructorError
 from yaml.scanner import ScannerError
 from yaml.parser import ParserError
 from osm_export_tool.sql import SQLValidator, OverpassFilter
+from osm_export_tool import GeomType
 
 def slugify(s):
     """
@@ -106,10 +107,12 @@ class FeatureSelection(object):
             #self._valid = (self._yaml != None)
 
     def match(self,tags,geom_type):
-        if len(tags) > 0:
-            return ['buildings']
-        return []
-
+        if len(tags) == 0:
+            return []
+        for theme in self.doc:
+            print(theme)
+            if geom_type == GeomType.POLYGON:
+                yield theme
 
     @property
     def valid(self):

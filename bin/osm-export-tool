@@ -22,11 +22,11 @@ def main():
 	formats = parsed.formats.split(',')
 	outputs = []
 	if 'gpkg' in formats:
-		outputs.append(export.Geopackage(parsed.output_name))
+		outputs.append(export.Geopackage(parsed.output_name,mapping))
 	if 'shp' in formats:
-		outputs.append(export.Shapefile(parsed.output_name))
+		outputs.append(export.Shapefile(parsed.output_name,mapping))
 	if 'kml' in formats:
-		outputs.append(export.Kml(parsed.output_name))
+		outputs.append(export.Kml(parsed.output_name,mapping))
 	h = export.Handler(outputs,mapping)
 	start_time = time.time()
 	h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
