@@ -25,7 +25,7 @@ isnotnull = Keyword("is not null",caseless=True)('notnull')
 binop = oneOf("= != < > >= <=", caseless=True)('binop')
 intNum = Word( nums )
 
-columnRval = (intNum | quotedString)('rval*')
+columnRval = (intNum | quotedString.setParseAction(lambda x:x[0][1:-1]))('rval*')
 whereCondition = Group(
     ( columnName + isnotnull ) |
     ( columnName + binop + columnRval ) |
@@ -79,30 +79,24 @@ def strip_quotes(token):
         token = token[1:-1]
     return token.replace(' ','\\ ')
 
-class OverpassFilter(object):
+
+# is either an Expression or a Condition
+def _match(d,tags):
+    if 'or' in d:
+        return _match(d['condition'],tags) or _match(d['expression'],tags)
+    if 'and' in d:
+        return _match(d['condition'],tags) and _match(d['expression'],tags)
+    if 'binop' in d:
+        if d['binop'] == '=':
+            return d['columnName'] in tags and tags[d['columnName']] == d['rval'][0]
+        if d['binop'] == '!=':
+            return d['columnName'] not in tags or tags[d['columnName']] != d['rval'][0]
+    if 'condition' in d:
+        return _match(d['condition'],tags)
+
+class Matcher:
     def __init__(self,s):
         self._parse_result = whereExpression.parseString(s,parseAll=True)
 
-    def _filter(self,t):
-        if 'or' in t:
-            return self._filter(t['condition']) + self._filter(t['expression'])
-        if 'and' in t:
-            return self._filter(t['condition']) + self._filter(t['expression'])
-        if 'binop' in t:
-            if t['binop'] == '=':
-                return ['[' + t['columnName'] + '=' + t['rval'][0] + ']']
-            else:
-                return ['[' + t['columnName'] + ']']
-        if 'in' in t:
-            x = '[' + t['columnName'] + "~'" +  '|'.join([strip_quotes(r) for r in t['rval']]) + "']"
-            return [x]
-        if 'notnull' in t:
-            return ['[' + t['columnName'] + ']']
-        if 'expression' in t: 
-            return self._filter(t['expression'])
-        if 'condition' in t:
-            return self._filter(t['condition'])
-
-
-    def filter(self):
-        return self._filter(self._parse_result.asDict())
+    def matches(self,tags):
+        return _match(self._parse_result[0],tags)

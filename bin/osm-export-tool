@@ -3,7 +3,7 @@ import sys
 import time
 import argparse
 import osm_export_tool.export as export
-from osm_export_tool.feature_selection import FeatureSelection
+from osm_export_tool.mapping import Mapping
 
 def main():
 	parser = argparse.ArgumentParser(description='Export OSM data in other file formats.')
@@ -17,7 +17,7 @@ def main():
 
 	mapping = None
 	with open(parsed.mapping,'r') as f:
-		mapping = FeatureSelection(f.read())
+		mapping = Mapping(f.read())
 
 	formats = parsed.formats.split(',')
 	outputs = []

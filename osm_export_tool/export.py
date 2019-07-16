@@ -47,12 +47,13 @@ class Shapefile:
 
 class Geopackage:
     class Layer:
-        def __init__(self,ds,name,ogr_geom_type):
-            self.cols = ['name']
+        def __init__(self,ds,name,ogr_geom_type,keys):
+            self.columns = keys
             self.ogr_layer = ds.CreateLayer(name, None, ogr_geom_type)
-            field_name = ogr.FieldDefn('name', ogr.OFTString)
-            field_name.SetWidth(254)
-            self.ogr_layer.CreateField(field_name)
+            for column_name in self.columns:
+                field_name = ogr.FieldDefn(column_name, ogr.OFTString)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
             self.defn = self.ogr_layer.GetLayerDefn()
 
     def __init__(self,output_name,mapping):
@@ -62,22 +63,20 @@ class Geopackage:
 
         self.layers = {}
         for theme in mapping.themes:
-            if 'points' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.POINT)] = Geopackage.Layer(self.ds,theme + '_points',ogr.wkbPoint)
-            if 'lines' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.LINE)] = Geopackage.Layer(self.ds,theme + '_lines',ogr.wkbLineString)
-            if 'polygons' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.POLYGON)] = Geopackage.Layer(self.ds,theme + '_polygons',ogr.wkbMultiPolygon)
-
-        print(self.layers)
+            if theme.points:
+                self.layers[(theme.name,GeomType.POINT)] = Geopackage.Layer(self.ds,theme.name + '_points',ogr.wkbPoint,theme.keys)
+            if theme.lines:
+                self.layers[(theme.name,GeomType.LINE)] = Geopackage.Layer(self.ds,theme.name + '_lines',ogr.wkbLineString,theme.keys)
+            if theme.polygons:
+                self.layers[(theme.name,GeomType.POLYGON)] = Geopackage.Layer(self.ds,theme.name + '_polygons',ogr.wkbMultiPolygon,theme.keys)
 
     def write(self,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
-        for col in layer.cols:
-            if col in tags:
-                feature.SetField(col,tags[col])
+        for column_name in layer.columns:
+            if column_name in tags:
+                feature.SetField(column_name,tags[column_name])
         layer.ogr_layer.CreateFeature(feature)
 
     def finalize(self):
@@ -93,31 +92,34 @@ class Handler(o.SimpleHandler):
 
     def node(self,n):
         geom = None
-        for layer_name in self.mapping.match(n.tags,GeomType.POINT):
-            if not geom:
-                geom = create_geom(fab.create_point(n))
-            for output in self.outputs:
-                output.write(layer_name,GeomType.POINT,geom,n.tags)
+        for theme in self.mapping.themes:
+            if theme.matches(GeomType.POINT,n.tags):
+                if not geom:
+                    geom = create_geom(fab.create_point(n))
+                for output in self.outputs:
+                    output.write(theme.name,GeomType.POINT,geom,n.tags)
 
     def way(self, w):
         try:
             geom = None
-            for layer_name in self.mapping.match(w.tags,GeomType.LINE):
-                if not geom:
-                    geom = create_geom(fab.create_linestring(w))
-                for output in self.outputs:
-                    output.write(layer_name,GeomType.LINE,geom,w.tags)
+            for theme in self.mapping.themes:
+                if theme.matches(GeomType.LINE,w.tags):
+                    if not geom:
+                        geom = create_geom(fab.create_linestring(w))
+                    for output in self.outputs:
+                        output.write(theme.name,GeomType.LINE,geom,w.tags)
         except RuntimeError:
             print("Incomplete way: {0}".format(w.id))
 
     def area(self,a):
         try:
             geom = None
-            for layer_name in self.mapping.match(a.tags,GeomType.POLYGON):
-                if not geom:
-                    geom = create_geom(fab.create_multipolygon(a))
-                for output in self.outputs:
-                    output.write(layer_name,GeomType.POLYGON,geom,a.tags)
+            for theme in self.mapping.themes:
+                if theme.matches(GeomType.POLYGON,a.tags):
+                    if not geom:
+                        geom = create_geom(fab.create_multipolygon(a))
+                    for output in self.outputs:
+                        output.write(theme.name,GeomType.POLYGON,geom,a.tags)
         except RuntimeError:
             print('Invalid area: {0}'.format(a.orig_id()))
 

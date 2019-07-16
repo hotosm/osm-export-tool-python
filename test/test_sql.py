@@ -1,5 +1,5 @@
 import unittest
-from osm_export_tool.feature_selection.sql import SQLValidator, OverpassFilter
+from osm_export_tool.sql import SQLValidator, Matcher
 
 class TestSql(unittest.TestCase):
 
@@ -64,28 +64,23 @@ class TestSql(unittest.TestCase):
         self.assertTrue(s.valid)
         self.assertEqual(s.column_names,['admin','level','height'])
 
+class TestMatcher(unittest.TestCase):
+    def test_matcher_binop(self):
+        m = Matcher("building = 'yes'")
+        self.assertTrue(m.matches({'building':'yes'}))
+        self.assertFalse(m.matches({'building':'no'}))
 
-class TestOverpassFilter(unittest.TestCase):
-    def test_basic(self):
-        s = OverpassFilter("name = 'somename'")
-        self.assertEqual(s.filter(),["[name='somename']"])
-        s = OverpassFilter("level > 4")
-        self.assertEqual(s.filter(),["[level]"])
+        m = Matcher("building != 'yes'")
+        self.assertFalse(m.matches({'building':'yes'}))
+        self.assertTrue(m.matches({'building':'no'}))
 
-    def test_basic_list(self):
-        s = OverpassFilter("name IN ('val1','val2')")
-        self.assertEqual(s.filter(),["[name~'val1|val2']"])
+    def test_matcher_or(self):
+        m = Matcher("building = 'yes' OR amenity = 'bank'")
+        self.assertTrue(m.matches({'building':'yes'}))
+        self.assertTrue(m.matches({'amenity':'bank'}))
+        self.assertFalse(m.matches({}))
 
-    def test_whitespace(self):
-        s = OverpassFilter("name = 'some value'")
-        self.assertEqual(s.filter(),["[name='some value']"])
-
-    def test_notnull(self):
-        s = OverpassFilter("name is not null")
-        self.assertEqual(s.filter(),["[name]"])
-
-    def test_and_or(self):
-        s = OverpassFilter("name1 = 'foo' or name2 = 'bar'")
-        self.assertEqual(s.filter(),["[name1='foo']","[name2='bar']"])
-        s = OverpassFilter("(name1 = 'foo' and name2 = 'bar') or name3 = 'baz'")
-        self.assertEqual(s.filter(),["[name1='foo']","[name2='bar']","[name3='baz']"])
+    def test_matcher_and(self):
+        m = Matcher("building = 'yes' AND amenity = 'bank'")
+        self.assertFalse(m.matches({'building':'yes'}))
+        self.assertFalse(m.matches({'amenity':'bank'}))
