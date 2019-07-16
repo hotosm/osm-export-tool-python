@@ -5,17 +5,9 @@ from pyparsing import Word, delimitedList, Optional, \
 class InvalidSQL(Exception):
     pass
 
-def checkQuotedColon(s,loc,toks):
-    if ':' in toks[0]:
-        raise InvalidSQL("identifier with colon : must be in double quotes.")
 
-def checkDoubleQuotes(s,loc,toks):
-    #TODO really?
-    if toks[0][0] == "'":
-        raise InvalidSQL("quoted strings must use double quotes.")
-
-ident          = Word( alphas, alphanums + "_:" ).setParseAction(checkQuotedColon)
-columnName =   (ident | quotedString().setParseAction(checkDoubleQuotes))("columnName")
+ident          = Word( alphas, alphanums + "_:" )
+columnName =   (ident | quotedString())("columnName")
 
 whereExpression = Forward()
 and_ = Keyword("and", caseless=True)('and')
@@ -93,10 +85,19 @@ def _match(d,tags):
             return d['columnName'] not in tags or tags[d['columnName']] != d['rval'][0]
     if 'condition' in d:
         return _match(d['condition'],tags)
+    if 'expression' in d:
+        return _match(d['expression'],tags)
+    if 'notnull' in d:
+        return d['columnName'] in tags
+    if 'in' in d:
+        return d['columnName'] in tags and tags[d['columnName']] in d['rval']
+    print(d)
+    raise Exception
 
 class Matcher:
     def __init__(self,s):
-        self._parse_result = whereExpression.parseString(s,parseAll=True)
+        self._parse_result = whereExpression.parseString(s,parseAll=True).asDict()
+        # TODO convert parse_result into an optimized form with string interning
 
     def matches(self,tags):
-        return _match(self._parse_result[0],tags)
+        return _match(self._parse_result,tags)

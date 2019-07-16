@@ -36,13 +36,8 @@ class TestSql(unittest.TestCase):
 
     def test_colons_etc(self):
         s = SQLValidator("addr:housenumber IS NOT NULL")
-        self.assertFalse(s.valid)
-        self.assertEqual(s.errors,['identifier with colon : must be in double quotes.'])
+        self.assertTrue(s.valid)
         s = SQLValidator("admin_level IS NOT NULL")
-        self.assertTrue(s.valid)
-        s = SQLValidator('"addr:housenumber" IS NOT NULL')
-        self.assertTrue(s.valid)
-        s = SQLValidator('"addr housenumber" IS NOT NULL')
         self.assertTrue(s.valid)
 
     def test_invalid_sql(self):
@@ -74,6 +69,14 @@ class TestMatcher(unittest.TestCase):
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertTrue(m.matches({'building':'no'}))
 
+    def test_matcher_colon(self):
+        m = Matcher("addr:housenumber = 1")
+        self.assertTrue(m.matches({'addr:housenumber':'1'}))
+
+        m = Matcher("building != 'yes'")
+        self.assertFalse(m.matches({'building':'yes'}))
+        self.assertTrue(m.matches({'building':'no'}))
+
     def test_matcher_or(self):
         m = Matcher("building = 'yes' OR amenity = 'bank'")
         self.assertTrue(m.matches({'building':'yes'}))
@@ -84,3 +87,16 @@ class TestMatcher(unittest.TestCase):
         m = Matcher("building = 'yes' AND amenity = 'bank'")
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertFalse(m.matches({'amenity':'bank'}))
+
+    def test_matcher_is_not_null(self):
+        m = Matcher("building IS NOT NULL")
+        self.assertTrue(m.matches({'building':'one'}))
+        self.assertTrue(m.matches({'building':'two'}))
+        self.assertFalse(m.matches({}))
+
+    def test_in(self):
+        m = Matcher("building IN ('one','two')")
+        self.assertTrue(m.matches({'building':'one'}))
+        self.assertTrue(m.matches({'building':'two'}))
+        self.assertFalse(m.matches({}))
+        self.assertFalse(m.matches({'building':'three'}))
