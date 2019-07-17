@@ -10,12 +10,15 @@ from osm_export_tool import GeomType
 fab = o.geom.WKBFactory()
 create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
 
+epsg_4326 = ogr.osr.SpatialReference()
+epsg_4326.ImportFromEPSG(4326)
+
 class Shapefile:
     class Layer:
         def __init__(self,driver,name,ogr_geom_type):
             self.cols = ['name']
             self.ds = driver.CreateDataSource(name + '.shp')
-            self.ogr_layer = self.ds.CreateLayer('', None, ogr_geom_type)
+            self.ogr_layer = self.ds.CreateLayer('', epsg_4326, ogr_geom_type)
             field_name = ogr.FieldDefn('name', ogr.OFTString)
             field_name.SetWidth(254)
             self.ogr_layer.CreateField(field_name)
@@ -49,7 +52,7 @@ class Geopackage:
     class Layer:
         def __init__(self,ds,name,ogr_geom_type,keys):
             self.columns = keys
-            self.ogr_layer = ds.CreateLayer(name, None, ogr_geom_type)
+            self.ogr_layer = ds.CreateLayer(name, epsg_4326, ogr_geom_type)
             for column_name in self.columns:
                 field_name = ogr.FieldDefn(column_name, ogr.OFTString)
                 field_name.SetWidth(254)
