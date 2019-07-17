@@ -1,0 +1,743 @@
+banks:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where: 
+    - amenity = 'bank' OR building = 'bank'
+
+communication_towers:
+  types:
+    - points
+    - polygons
+  select:
+    - man_made
+    - tower:type
+    - name
+    - height
+    - operator
+    - communication:mobile
+    - communication:radio
+    - addr:city
+    - source
+  where:
+    - man_made = 'tower' OR tower:type = 'communication'
+
+airports:
+  types:
+    - points
+    - polygons
+  select:
+    - aeroway
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - backup_generator
+    - source
+  where:
+    - aeroway = 'aerodrome' OR building = 'aerodrome'
+
+ferry_terminals:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - backup_generator
+    - source
+  where:
+    - amenity = 'ferry_terminal' OR building = 'ferry_terminal'
+
+train_stations:
+  types:
+    - points
+    - polygons
+  select:
+    - railway
+    - name
+    - ele
+    - operator
+    - addr:full
+    - addr:city
+    - source
+  where:
+    - railway = 'station'
+
+bus_stations:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - name
+    - addr:full
+    - addr:city
+    - source
+  where:
+    - amenity = 'bus_station'
+
+roads:
+  types:
+    - lines
+  select:
+    - highway
+    - name
+    - layer
+    - width
+    - lanes
+    - surface
+    - smoothness
+    - motorcycle
+    - oneway
+    - ref
+    - source
+  where:
+    - highway IN ('motorway','trunk','primary','secondary','tertiary','service','residential','pedestrian','path','living_street','track')
+
+railways:
+  types:
+    - lines
+  select:
+    - railway
+    - name
+    - layer
+  where:
+    - railway = 'rail'
+
+fire_hydrants:
+  types:
+    - points
+  select:
+    - emergency
+    - fire_hydrant:type
+    - name
+    - operator
+    - addr:city
+    - source
+  where:
+    - emergency = 'fire_hydrant'
+
+water_towers:
+  types:
+    - points
+    - polygons
+  select:
+    - man_made
+    - name
+    - operator
+    - addr:city
+    - source
+  where:
+    - man_made = 'water_tower'
+
+pump_houses:
+  types:
+    - points
+    - polygons
+  select:
+    - man_made
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - operator
+    - pump:unit
+    - elevation
+    - capacity:pump
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - backup_generator
+    - source
+  where:
+    - man_made = 'pumping_station' OR building = 'pumping_station'
+
+reservoirs:
+  types:
+    - polygons
+  select:
+    - landuse
+    - name
+    - operator
+    - addr:city
+    - source
+  where:
+    - landuse = 'reservoir'
+
+water_gates:
+  types:
+    - lines
+    - polygons
+  select:
+    - waterway
+    - name
+    - operator
+    - floodgate:unit
+    - elevation
+    - condition
+    - addr:city
+    - source
+  where:
+    - waterway = 'floodgate'
+
+springs:
+  types:
+    - points
+  select:
+    - natural
+    - name
+    - operator
+    - addr:city
+    - source
+  where:
+    - natural = 'spring'
+
+embankments:
+  types:
+    - lines
+  select:
+    - man_made
+    - name
+    - material
+    - source
+  where:
+    - man_made = 'embankment'
+
+waterways:
+  types:
+    - lines
+    - polygons
+  select:
+    - name
+    - waterway
+    - width
+    - source
+  where:
+    - waterway IS NOT NULL
+
+power_towers:
+  types:
+    - points
+    - polygons
+  select:
+    - power
+    - name
+    - addr:city 
+    - operator
+    - source
+  where:
+    - power = 'tower'
+
+electrical_substations:
+  types:
+    - points
+    - polygons
+  select:
+    - power
+    - substation
+    - building
+    - name
+    - addr:city 
+    - rating
+    - operator
+    - source
+  where:
+    - power = 'substation' OR building = 'power_substation'
+
+power_plants:
+  types:
+    - points
+    - polygons
+  select:
+    - power
+    - building
+    - name
+    - operator
+    - addr:full
+    - addr:city
+    - source
+  where:
+    - power = 'plant' OR building = 'power_plant'
+
+gas_stations:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - name
+    - addr:full
+    - addr:city
+    - operator
+    - source
+  where:
+    - amenity = 'fuel'
+
+kindergartens:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where:
+    - amenity = 'kindergarten' OR building = 'kindergarten'
+
+schools:
+  types:
+    - points
+    - polygons
+  select:
+    - school:type_idn
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'school' OR building = 'school'
+
+colleges:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'college' OR building = 'college'
+
+universities:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'university' OR building = 'university'
+
+places_of_worship:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - religion
+    - name
+    - addr:full
+    - addr:city
+    - building
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'place_of_worship' OR building IN ('mosque','church','temple')
+
+supermarkets:
+  types:
+    - points
+    - polygons
+  select:
+    - shop
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - ground_floor:height
+    - building:condition
+    - backup_generator
+    - source
+  where:
+    - shop = 'supermarket' OR building = 'supermarket'
+
+traditional_marketplaces:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where:
+    - amenity = 'marketplace' OR building = 'marketplace'
+
+clinics:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - building
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'clinic'
+
+hospitals:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - name
+    - addr:full
+    - addr:city
+    - operator:type
+    - building
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - amenity = 'hospital' OR building = 'hospital'
+
+police_stations:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where:
+    - amenity = 'police' OR building = 'police'
+
+fire_stations:
+  types:
+    - points
+    - polygons
+  select:
+    - amenity
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where:
+    - amenity = 'fire_station' OR building = 'fire_station'
+
+sport_facilities:
+  types:
+    - points
+    - polygons
+  select:
+    - leisure
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - sport
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - leisure IN ('stadium','sports_centre','pitch') OR building IN ('stadium','sports_centre')
+
+parks:
+  types:
+    - points
+    - polygons
+  select:
+    - leisure
+    - name
+    - addr:full
+    - addr:city
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - leisure = 'park'
+
+local_government_offices:
+  types:
+    - points
+    - polygons
+  select:
+    - office
+    - building
+    - admin_level
+    - name
+    - addr:full
+    - addr:city
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+    - evacuation_center
+    - shelter_type
+    - water_source
+    - kitchen:facilities
+    - toilet:facilities
+    - toilets:number
+  where:
+    - office = 'government' OR building IN ('governor_office', 'townhall','subdistrict_office','village_office','community_group_office')
+
+
+government_offices:
+  types:
+    - points
+    - polygons
+  select:
+    - office
+    - building
+    - name
+    - addr:full
+    - addr:city
+    - admin_level
+    - capacity:persons
+    - building:levels
+    - building:structure
+    - building:material
+    - building:floor
+    - building:roof
+    - access:roof
+    - building:condition
+    - ground_floor:height
+    - backup_generator
+    - source
+  where:
+    - office = 'government' OR building = 'government_office'
+
+administrative_boundaries:
+  types:
+    - lines
+  select:
+    - type
+    - boundary
+    - name
+    - admin_level
+    - is_in:province
+    - is_in:city
+  where:
+    - type = 'boundary' OR boundary = 'administrative'
