@@ -71,33 +71,41 @@ def strip_quotes(token):
         token = token[1:-1]
     return token.replace(' ','\\ ')
 
-
-# is either an Expression or a Condition
 def _match(d,tags):
-    if 'or' in d:
-        return _match(d['condition'],tags) or _match(d['expression'],tags)
-    if 'and' in d:
-        return _match(d['condition'],tags) and _match(d['expression'],tags)
-    if 'binop' in d:
-        if d['binop'] == '=':
-            return d['columnName'] in tags and tags[d['columnName']] == d['rval'][0]
-        if d['binop'] == '!=':
-            return d['columnName'] not in tags or tags[d['columnName']] != d['rval'][0]
-    if 'condition' in d:
-        return _match(d['condition'],tags)
-    if 'expression' in d:
-        return _match(d['expression'],tags)
-    if 'notnull' in d:
-        return d['columnName'] in tags
-    if 'in' in d:
-        return d['columnName'] in tags and tags[d['columnName']] in d['rval']
+    op = d[0]
+    if op == 'or':
+        return _match(d[1],tags) or _match(d[2],tags)
+    elif op == 'and':
+        return _match(d[1],tags) and _match(d[2],tags)
+    elif op == '=':
+        return d[1] in tags and tags[d[1]] == d[2]
+    elif op == '!=':
+        return d[1] not in tags or tags[d[1]] != d[2]
+    elif op == 'notnull':
+        return d[1] in tags
+    elif op == 'in':
+        return (d[1] in tags) and (tags[d[1]] in d[2])
     print(d)
     raise Exception
 
 class Matcher:
     def __init__(self,s):
-        self._parse_result = whereExpression.parseString(s,parseAll=True).asDict()
-        # TODO convert parse_result into an optimized form with string interning
+        def prefixform(d):
+            if 'or' in d:
+                return ('or',prefixform(d['condition']),prefixform(d['expression']))
+            elif 'and' in d:
+                return ('and',prefixform(d['condition']),prefixform(d['expression']))
+            elif 'condition' in d:
+                return prefixform(d['condition'])
+            elif 'expression' in d:
+                return prefixform(d['expression'])
+            elif 'binop' in d:
+                return (d['binop'],d['columnName'],d['rval'][0])
+            elif 'notnull' in d:
+                return ('notnull',d['columnName'])
+            elif 'in' in d:
+                return ('in',d['columnName'],d['rval'])
+        self._parse_result = prefixform(whereExpression.parseString(s,parseAll=True).asDict())
 
     def matches(self,tags):
         return _match(self._parse_result,tags)
