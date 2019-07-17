@@ -94,6 +94,8 @@ class Handler(o.SimpleHandler):
         self.mapping = mapping
 
     def node(self,n):
+        if len(n.tags) == 0:
+            return
         geom = None
         for theme in self.mapping.themes:
             if theme.matches(GeomType.POINT,n.tags):
@@ -103,6 +105,8 @@ class Handler(o.SimpleHandler):
                     output.write(theme.name,GeomType.POINT,geom,n.tags)
 
     def way(self, w):
+        if len(w.tags) == 0:
+            return
         try:
             geom = None
             for theme in self.mapping.themes:
@@ -115,6 +119,8 @@ class Handler(o.SimpleHandler):
             print("Incomplete way: {0}".format(w.id))
 
     def area(self,a):
+        if len(a.tags) == 0:
+            return
         try:
             geom = None
             for theme in self.mapping.themes:
