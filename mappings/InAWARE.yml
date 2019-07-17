@@ -25,7 +25,6 @@ banks:
 communication_towers:
   types:
     - points
-    - polygons
   select:
     - man_made
     - tower:type
@@ -41,7 +40,6 @@ communication_towers:
 
 airports:
   types:
-    - points
     - polygons
   select:
     - aeroway
@@ -64,7 +62,6 @@ airports:
 
 ferry_terminals:
   types:
-    - points
     - polygons
   select:
     - amenity
@@ -96,9 +93,10 @@ train_stations:
     - operator
     - addr:full
     - addr:city
+    - building
     - source
   where:
-    - railway = 'station'
+    - railway = 'station' OR building = 'train_station'
 
 bus_stations:
   types:
@@ -111,7 +109,7 @@ bus_stations:
     - addr:city
     - source
   where:
-    - amenity = 'bus_station'
+    - amenity = 'bus_station' OR or building = 'bus_station'
 
 roads:
   types:
@@ -138,6 +136,7 @@ railways:
     - railway
     - name
     - layer
+    - source
   where:
     - railway = 'rail'
 
@@ -157,7 +156,6 @@ fire_hydrants:
 water_towers:
   types:
     - points
-    - polygons
   select:
     - man_made
     - name
@@ -207,7 +205,7 @@ reservoirs:
 
 water_gates:
   types:
-    - lines
+    - points
     - polygons
   select:
     - waterway
@@ -259,7 +257,6 @@ waterways:
 power_towers:
   types:
     - points
-    - polygons
   select:
     - power
     - name
@@ -325,7 +322,7 @@ kindergartens:
     - addr:full
     - addr:city
     - operator:type
-    - capacity:persons
+    - capcity:persons
     - building:levels
     - building:structure
     - building:material
@@ -361,13 +358,13 @@ schools:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - amenity = 'school' OR building = 'school'
 
@@ -392,13 +389,13 @@ colleges:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - amenity = 'college' OR building = 'college'
 
@@ -430,6 +427,7 @@ universities:
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - amenity = 'university' OR building = 'university'
 
@@ -461,6 +459,7 @@ places_of_worship:
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - amenity = 'place_of_worship' OR building IN ('mosque','church','temple')
 
@@ -540,8 +539,9 @@ clinics:
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
-    - amenity = 'clinic'
+    - amenity = 'clinic' or building = 'clinic'
 
 hospitals:
   types:
@@ -571,6 +571,7 @@ hospitals:
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - amenity = 'hospital' OR building = 'hospital'
 
@@ -624,15 +625,15 @@ fire_stations:
 
 sport_facilities:
   types:
-    - points
+    - point
     - polygons
   select:
     - leisure
-    - building
+    - sport
     - name
+    - building
     - addr:full
     - addr:city
-    - sport
     - capacity:persons
     - building:levels
     - building:structure
@@ -643,15 +644,15 @@ sport_facilities:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
-    - leisure IN ('stadium','sports_centre','pitch') OR building IN ('stadium','sports_centre')
+    - leisure IN ('stadium','sports_centre','pitch','swimming_pool') OR building IN ('stadium','sports_centre')
 
 parks:
   types:
@@ -659,18 +660,19 @@ parks:
     - polygons
   select:
     - leisure
+    - landuse
     - name
     - addr:full
     - addr:city
-    - source
     - evacuation_center
     - shelter_type
     - water_source
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
-    - leisure = 'park'
+    - leisure = 'park' OR landuse='recreation_gound'
 
 local_government_offices:
   types:
@@ -693,13 +695,13 @@ local_government_offices:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
     - kitchen:facilities
     - toilet:facilities
     - toilets:number
+    - source
   where:
     - office = 'government' OR building IN ('governor_office', 'townhall','subdistrict_office','village_office','community_group_office')
 
@@ -731,7 +733,7 @@ government_offices:
 
 administrative_boundaries:
   types:
-    - lines
+    - polygons
   select:
     - type
     - boundary
@@ -739,5 +741,12 @@ administrative_boundaries:
     - admin_level
     - is_in:province
     - is_in:city
+    - is_in:town
+    - is_in:municipality
+    - is_in:village
+    - is_in:RW
+    - flood_prone
+    - landslide_prone
+    - source    
   where:
-    - type = 'boundary' OR boundary = 'administrative'
+    - type = 'boundary' AND boundary = 'administrative'
