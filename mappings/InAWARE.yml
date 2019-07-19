@@ -25,6 +25,7 @@ banks:
 communication_towers:
   types:
     - points
+    - polygon
   select:
     - man_made
     - tower:type
@@ -36,10 +37,11 @@ communication_towers:
     - addr:city
     - source
   where:
-    - man_made = 'tower' OR tower:type = 'communication'
+    - man_made = 'tower' AND tower:type = 'communication'
 
 airports:
   types:
+    - points
     - polygons
   select:
     - aeroway
@@ -62,6 +64,7 @@ airports:
 
 ferry_terminals:
   types:
+    - points
     - polygons
   select:
     - amenity
@@ -156,6 +159,7 @@ fire_hydrants:
 water_towers:
   types:
     - points
+    - polygons
   select:
     - man_made
     - name
@@ -193,6 +197,7 @@ pump_houses:
 
 reservoirs:
   types:
+    - points
     - polygons
   select:
     - landuse
@@ -206,7 +211,7 @@ reservoirs:
 water_gates:
   types:
     - points
-    - polygons
+    - polygon
   select:
     - waterway
     - name
@@ -222,6 +227,7 @@ water_gates:
 springs:
   types:
     - points
+    - polygons
   select:
     - natural
     - name
@@ -244,6 +250,7 @@ embankments:
 
 waterways:
   types:
+    - points
     - lines
     - polygons
   select:
@@ -284,7 +291,6 @@ electrical_substations:
 
 power_plants:
   types:
-    - points
     - polygons
   select:
     - power
