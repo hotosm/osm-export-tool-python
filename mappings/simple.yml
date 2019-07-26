@@ -1,0 +1,8 @@
+buildings:
+    types:
+      - polygons
+    select:
+      - name
+      - building
+    where: 
+      - building = 'yes'
