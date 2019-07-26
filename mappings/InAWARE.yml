@@ -25,7 +25,7 @@ banks:
 communication_towers:
   types:
     - points
-    - polygon
+    - polygons
   select:
     - man_made
     - tower:type
@@ -112,7 +112,7 @@ bus_stations:
     - addr:city
     - source
   where:
-    - amenity = 'bus_station' OR or building = 'bus_station'
+    - amenity = 'bus_station' OR building = 'bus_station'
 
 roads:
   types:
@@ -426,7 +426,6 @@ universities:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
@@ -458,7 +457,6 @@ places_of_worship:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
@@ -538,7 +536,6 @@ clinics:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
@@ -570,7 +567,6 @@ hospitals:
     - building:condition
     - ground_floor:height
     - backup_generator
-    - source
     - evacuation_center
     - shelter_type
     - water_source
