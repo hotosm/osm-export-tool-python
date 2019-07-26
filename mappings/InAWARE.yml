@@ -322,7 +322,7 @@ kindergartens:
     - addr:full
     - addr:city
     - operator:type
-    - capacity:persons
+    - capcity:persons
     - building:levels
     - building:structure
     - building:material
@@ -747,6 +747,6 @@ administrative_boundaries:
     - is_in:RW
     - flood_prone
     - landslide_prone
-    - source
+    - source    
   where:
     - type = 'boundary' AND boundary = 'administrative'
