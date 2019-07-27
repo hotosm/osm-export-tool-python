@@ -24,10 +24,21 @@ This program uses PyOsmium to read OSM files and GDAL/OGR to write GIS formats, 
 
 ```
 osm-export-tool jakarta.osm.pbf jakarta
-
--m : specify a mapping YAML. Defaults to example/defaults.yaml, which is a very broad selection of OSM tags.
--f : a comma-separated list of formats such as gpkg, shp. Defaults to just gpkg. 
 ```
+
+All the below flags are optional.
+
+* -m, --mapping : specify a mapping YAML. Defaults to example/defaults.yaml, which is a very broad selection of OSM tags.
+* -f, --formats : a comma-separated list of formats such as gpkg, shp. Defaults to just gpkg. 
+* --omit-osm-ids: An osm_id field is included in each layer by default, which is a node ID for points, and a way id (positive) or relation id (negative) for lines and polygons. This will prevent this field being added by default, although it may still be specified in `select`.
+* --clip <file>: either a .poly or GeoJSON file.
+
+## Yaml format
+
+* if the `types` key is omitted, it defaults to `points`, `lines` and `polygons`.
+* At least one tag is required as a child of the `select` key.
+* If the `where` key is omitted, it defaults to the condition where any of the `select`ed keys are not null.
+* if `where` is a list, it is equivalent to each `where` child joined by OR. 
 
 Input formats:
 * OSM PBF
