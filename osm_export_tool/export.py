@@ -15,32 +15,41 @@ epsg_4326.ImportFromEPSG(4326)
 
 class Shapefile:
     class Layer:
-        def __init__(self,driver,name,ogr_geom_type):
-            self.cols = ['name']
+        def __init__(self,driver,name,ogr_geom_type,keys):
+            self.columns = keys
             self.ds = driver.CreateDataSource(name + '.shp')
             self.ogr_layer = self.ds.CreateLayer('', epsg_4326, ogr_geom_type)
-            field_name = ogr.FieldDefn('name', ogr.OFTString)
-            field_name.SetWidth(254)
-            self.ogr_layer.CreateField(field_name)
+            for column_name in self.columns:
+                field_name = ogr.FieldDefn(column_name, ogr.OFTString)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
             self.defn = self.ogr_layer.GetLayerDefn()
 
     def __init__(self,output_name,mapping):
         driver = ogr.GetDriverByName('ESRI Shapefile')
 
         self.layers = {}
-        for theme in mapping.themes:
-            if 'points' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + theme + '_points',ogr.wkbPoint)
-            if 'lines' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + theme + '_lines',ogr.wkbLineString)
-            if 'polygons' in mapping.geom_types(theme):
-                self.layers[(theme,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + theme + '_polygons',ogr.wkbMultiPolygon)
+        for t in mapping.themes:
+            # if the theme has only one geom type, don't add a suffix to the layer name.
+            if t.points and not t.lines and not t.polygons:
+                self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbPoint,t.keys)
+            elif not t.points and t.lines and not t.polygons:
+                self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbLineString,t.keys)
+            elif not t.points and not t.lines and t.polygons:
+                self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbMultiPolygon,t.keys)
+            else:
+                if t.points:
+                    self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_points',ogr.wkbPoint,t.keys)
+                if t.lines:
+                    self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_lines',ogr.wkbLineString,t.keys)
+                if t.polygons:
+                    self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_polygons',ogr.wkbMultiPolygon,t.keys)
 
     def write(self,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
-        for col in layer.cols:
+        for col in layer.columns:
             if col in tags:
                 feature.SetField(col,tags[col])
         layer.ogr_layer.CreateFeature(feature)
@@ -51,8 +60,8 @@ class Shapefile:
 class Geopackage:
     class Layer:
         def __init__(self,ds,name,ogr_geom_type,keys):
+            self.ogr_layer = ds.CreateLayer(name, epsg_4326, ogr_geom_type,options=['SPATIAL_INDEX=NO'])
             self.columns = keys
-            self.ogr_layer = ds.CreateLayer(name, epsg_4326, ogr_geom_type)
             for column_name in self.columns:
                 field_name = ogr.FieldDefn(column_name, ogr.OFTString)
                 field_name.SetWidth(254)
@@ -66,12 +75,13 @@ class Geopackage:
 
         self.layers = {}
         for theme in mapping.themes:
+            layer = Geopackage.Layer(self.ds,theme.name,ogr.wkbUnknown,theme.keys)
             if theme.points:
-                self.layers[(theme.name,GeomType.POINT)] = Geopackage.Layer(self.ds,theme.name + '_points',ogr.wkbPoint,theme.keys)
+                self.layers[(theme.name,GeomType.POINT)] = layer
             if theme.lines:
-                self.layers[(theme.name,GeomType.LINE)] = Geopackage.Layer(self.ds,theme.name + '_lines',ogr.wkbLineString,theme.keys)
+                self.layers[(theme.name,GeomType.LINE)] = layer
             if theme.polygons:
-                self.layers[(theme.name,GeomType.POLYGON)] = Geopackage.Layer(self.ds,theme.name + '_polygons',ogr.wkbMultiPolygon,theme.keys)
+                self.layers[(theme.name,GeomType.POLYGON)] = layer
 
     def write(self,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
