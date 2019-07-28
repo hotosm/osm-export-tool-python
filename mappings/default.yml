@@ -50,7 +50,7 @@ buildings:
     - name
     - building
   where:
-    - barrier IS NOT NULL
+    - building IS NOT NULL
 
 housenumbers:
   types:
