@@ -1,0 +1,169 @@
+admin:
+    types:
+      - polygons
+    select:
+      - name
+      - boundary
+      - admin_level
+    where: 
+      - boundary = 'administrative'
+
+aeroways:
+  types:
+    - lines
+  select:
+    - aeroway
+  where:
+    - aeroway IN ('runway','taxiway')
+
+amenities:
+  types:
+    - points
+  select:
+    - name
+    - amenity
+  where:
+    - amenity in ('university','school','library','fuel','hospital','fire_station','police','townhall')
+
+barrierpoints:
+  types:
+    - points
+  select:
+    - name
+    - barrier
+  where:
+    - barrier IS NOT NULL
+
+barrierways:
+  types:
+    - lines
+  select:
+    - name
+    - barrier
+  where:
+    - barrier IS NOT NULL
+
+buildings:
+  types:
+    - polygons
+  select:
+    - name
+    - building
+  where:
+    - barrier IS NOT NULL
+
+housenumbers:
+  types:
+    - points
+  select:
+    - name
+    - addr:housenumber
+    - addr:street
+    - addr:postcode
+    - addr:city
+  where:
+    - addr:housenumber IS NOT NULL
+
+housenumbers_interpolated:
+  types:
+    - points
+  select:
+    - name
+    - addr:interpolation
+    - addr:street
+    - addr:postcode
+    - addr:city
+    - addr:inclusion
+  where:
+    - addr:interpolation IS NOT NULL
+
+landusages:
+  types:
+    - polygons
+  select:
+    - name
+    - aeroway
+    - amenity
+    - barrier
+    - highway
+    - landuse
+    - leisure
+    - man_made
+    - military
+    - natural
+    - place
+    - tourism
+  where:
+    - aeroway IN ('runway','taxiway') OR amenity IS NOT NULL OR barrier = 'hedge' OR highway IN ('pedestrian','footway') OR landuse IS NOT NULL or leisure IS NOT NULL or man_made = 'pier' OR military = 'barracks' OR natural IS NOT NULL or place = 'island' OR tourism = 'zoo'
+
+places:
+  types:
+    - points
+  select:
+    - name
+    - place
+    - population
+  where:
+    - place IS NOT NULL
+
+roads:
+  types:
+    - lines
+  select:
+    - name
+    - tunnel
+    - bridge
+    - oneway
+    - ref
+    - access
+    - service
+    - railway
+    - highway
+    - man_made
+  where:
+    - railway IS NOT NULL OR highway IS NOT NULL OR man_made in ('pier','groyne')
+
+transport_areas:
+  types:
+    - polygons
+  select:
+    - name
+    - aeroway
+    - railway
+  where:
+    - aeroway IN ('aerodrome','terminal','helipad','apron') OR railway IN ('station','platform')
+
+transport_points:
+  types:
+    - points
+  select:
+    - name
+    - aeroway
+    - highway
+    - railway
+  where:
+    - aeroway IN ('aerodrome','terminal','helipad','gate') OR highway IN ('motorway_junction','turning_circle','bus_stop') OR railway IN ('station','halt','tram_stop','crossing','level_crossing','subway_entrance')
+
+waterareas:
+  types:
+    - polygons
+  select:
+    - name
+    - amenity
+    - landuse
+    - leisure
+    - natural
+    - waterway
+  where:
+    - amenity = 'swimming_pool' OR landuse IN ('basin','reservoir') OR leisure = 'swimming_pool' OR natural = 'water' OR waterway = 'riverbank'
+
+waterways:
+  types:
+    - lines
+  select:
+    - name
+    - barrier
+    - waterway
+  where:
+    - barrier = 'ditch' OR waterway IN ('stream','river','canal','drain','ditch')
+

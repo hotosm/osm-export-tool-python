@@ -56,6 +56,7 @@ Output formats:
 
 1. OGC GeoPackage (.gpkg)
 * This is the default export format, and the most flexible for modern GIS applications. 
+* tables will be created with the wkbUnknown geometry type, which allows heterogeneous geometry types.
 
 2. Shapefile (.shp)
 * Each layer and geometry type is a separate .SHP file. This is because each .SHP file only supports a single geometry type and column schema. 

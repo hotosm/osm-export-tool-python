@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import sys
 import time
 import argparse
@@ -13,11 +14,15 @@ def main():
 	parser.add_argument('-m','--mapping', dest='mapping',help='YAML mapping of features schema. If not specified, a default is used.')
 	parser.add_argument('-v','--verbose', action='store_true')
 	parsed = parser.parse_args()
-	print(parsed.mapping)
 
 	mapping = None
-	with open(parsed.mapping,'r') as f:
-		mapping = Mapping(f.read())
+	if parsed.mapping:
+		with open(parsed.mapping,'r') as f:
+			mapping = Mapping(f.read())
+	else:
+		default_mapping = os.path.join(os.path.dirname(__file__), '../mappings/default.yml')
+		with open(default_mapping,'r') as f:
+			mapping = Mapping(f.read())
 
 	formats = parsed.formats.split(',')
 	outputs = []
