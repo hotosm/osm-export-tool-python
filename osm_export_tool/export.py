@@ -47,7 +47,7 @@ class Kml:
                 if t.polygons:
                     self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name + '_polygons',t.name,ogr.wkbMultiPolygon,t.keys)
 
-    def write(self,layer_name,geom_type,geom,tags):
+    def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
@@ -98,7 +98,7 @@ class Shapefile:
                 if t.polygons:
                     self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_polygons',ogr.wkbMultiPolygon,t.keys)
 
-    def write(self,layer_name,geom_type,geom,tags):
+    def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
@@ -136,7 +136,7 @@ class Geopackage:
             if theme.polygons:
                 self.layers[(theme.name,GeomType.POLYGON)] = layer
 
-    def write(self,layer_name,geom_type,geom,tags):
+    def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
@@ -165,7 +165,7 @@ class Handler(o.SimpleHandler):
                 if not geom:
                     geom = create_geom(fab.create_point(n))
                 for output in self.outputs:
-                    output.write(theme.name,GeomType.POINT,geom,n.tags)
+                    output.write(n.id,theme.name,GeomType.POINT,geom,n.tags)
 
     def way(self, w):
         if len(w.tags) == 0:
@@ -177,13 +177,14 @@ class Handler(o.SimpleHandler):
                     if not geom:
                         geom = create_geom(fab.create_linestring(w))
                     for output in self.outputs:
-                        output.write(theme.name,GeomType.LINE,geom,w.tags)
+                        output.write(w.id,theme.name,GeomType.LINE,geom,w.tags)
         except RuntimeError:
             print("Incomplete way: {0}".format(w.id))
 
     def area(self,a):
         if len(a.tags) == 0:
             return
+        osm_id = a.orig_id() if a.from_way() else -a.orig_id()
         try:
             geom = None
             for theme in self.mapping.themes:
@@ -191,7 +192,7 @@ class Handler(o.SimpleHandler):
                     if not geom:
                         geom = create_geom(fab.create_multipolygon(a))
                     for output in self.outputs:
-                        output.write(theme.name,GeomType.POLYGON,geom,a.tags)
+                        output.write(osm_id,theme.name,GeomType.POLYGON,geom,a.tags)
         except RuntimeError:
             print('Invalid area: {0}'.format(a.orig_id()))
 
