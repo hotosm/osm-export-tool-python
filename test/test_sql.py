@@ -61,42 +61,55 @@ class TestSql(unittest.TestCase):
 
 class TestMatcher(unittest.TestCase):
     def test_matcher_binop(self):
-        m = Matcher("building = 'yes'")
+        m = Matcher.from_sql("building = 'yes'")
         self.assertTrue(m.matches({'building':'yes'}))
         self.assertFalse(m.matches({'building':'no'}))
 
-        m = Matcher("building != 'yes'")
+        m = Matcher.from_sql("building != 'yes'")
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertTrue(m.matches({'building':'no'}))
 
     def test_matcher_colon(self):
-        m = Matcher("addr:housenumber = 1")
+        m = Matcher.from_sql("addr:housenumber = 1")
         self.assertTrue(m.matches({'addr:housenumber':'1'}))
 
-        m = Matcher("building != 'yes'")
+        m = Matcher.from_sql("building != 'yes'")
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertTrue(m.matches({'building':'no'}))
 
     def test_matcher_or(self):
-        m = Matcher("building = 'yes' OR amenity = 'bank'")
+        m = Matcher.from_sql("building = 'yes' OR amenity = 'bank'")
         self.assertTrue(m.matches({'building':'yes'}))
         self.assertTrue(m.matches({'amenity':'bank'}))
         self.assertFalse(m.matches({}))
 
     def test_matcher_and(self):
-        m = Matcher("building = 'yes' AND amenity = 'bank'")
+        m = Matcher.from_sql("building = 'yes' AND amenity = 'bank'")
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertFalse(m.matches({'amenity':'bank'}))
 
     def test_matcher_is_not_null(self):
-        m = Matcher("building IS NOT NULL")
+        m = Matcher.from_sql("building IS NOT NULL")
         self.assertTrue(m.matches({'building':'one'}))
         self.assertTrue(m.matches({'building':'two'}))
         self.assertFalse(m.matches({}))
 
     def test_in(self):
-        m = Matcher("building IN ('one','two')")
+        m = Matcher.from_sql("building IN ('one','two')")
         self.assertTrue(m.matches({'building':'one'}))
         self.assertTrue(m.matches({'building':'two'}))
         self.assertFalse(m.matches({}))
         self.assertFalse(m.matches({'building':'three'}))
+
+    def test_any(self):
+        m = Matcher.any("building");
+        self.assertTrue(m.matches({'building':'one'}))
+
+    def test_union(self):
+        m = Matcher.any("building").union(Matcher.any("parking"))
+        self.assertTrue(m.matches({'building':'one'}))
+        self.assertTrue(m.matches({'parking':'one'}))
+
+    def test_null(self):
+        m = Matcher.null()
+        self.assertFalse(m.matches({'building':'one'}))

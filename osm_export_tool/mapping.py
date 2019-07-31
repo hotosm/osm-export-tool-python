@@ -25,10 +25,17 @@ class Theme:
 
 		self.keys = d['select']
 
-		self.matcher = None
 		if 'where' in d:
-			self.matcher = Matcher(d['where'][0])
-
+			if isinstance(d['where'],list):
+				self.matcher = Matcher.null()
+				for w in d['where']:
+					self.matcher = self.matcher.union(Matcher.from_sql(w))
+			else:
+				self.matcher = Matcher.from_sql(d['where'])
+		else:
+			self.matcher = Matcher.null()
+			for key in self.keys:
+				self.matcher = self.matcher.union(Matcher.any(key))
 
 	def matches(self,geom_type,tags):
 		if geom_type == GeomType.POINT and not self.points:

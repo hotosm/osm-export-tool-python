@@ -72,6 +72,8 @@ def strip_quotes(token):
     return token.replace(' ','\\ ')
 
 def _match(d,tags):
+    if len(d) == 0:
+        return False
     op = d[0]
     if op == 'or':
         return _match(d[1],tags) or _match(d[2],tags)
@@ -89,7 +91,26 @@ def _match(d,tags):
     raise Exception
 
 class Matcher:
-    def __init__(self,s):
+    def __init__(self,expr):
+        self.expr = expr
+
+    def matches(self,tags):
+        return _match(self.expr,tags)
+
+    # returns a new matcher
+    def union(self,other_matcher):
+        return Matcher(('or',self.expr,other_matcher.expr))
+
+    @classmethod
+    def any(cls,tag_name):
+        return Matcher(('notnull',tag_name))
+
+    @classmethod
+    def null(cls):
+        return Matcher(())
+
+    @classmethod
+    def from_sql(cls,sql):
         def prefixform(d):
             if 'or' in d:
                 return ('or',prefixform(d['condition']),prefixform(d['expression']))
@@ -105,7 +126,4 @@ class Matcher:
                 return ('notnull',d['columnName'])
             elif 'in' in d:
                 return ('in',d['columnName'],d['rval'])
-        self._parse_result = prefixform(whereExpression.parseString(s,parseAll=True).asDict())
-
-    def matches(self,tags):
-        return _match(self._parse_result,tags)
+        return cls(prefixform(whereExpression.parseString(sql,parseAll=True).asDict()))

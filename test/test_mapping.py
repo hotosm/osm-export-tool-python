@@ -81,8 +81,40 @@ class TestMapping(unittest.TestCase):
         self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'building':'yes'}))
 
     def test_default_matcher(self):
-        pass
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - addr:housenumber
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'addr:housenumber':'1234'}))
 
     def test_multiple_matchers(self):
-        pass
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - addr:housenumber
+          where: 
+            - building = 'yes'
+            - amenity = 'parking'
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'building':'yes'}))
+        self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'amenity':'parking'}))
+
+    def test_nonlist_matcher(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - addr:housenumber
+          where: building = 'yes'
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'building':'yes'}))
 
