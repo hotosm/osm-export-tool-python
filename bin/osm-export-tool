@@ -13,6 +13,7 @@ def main():
 	parser.add_argument('-f','--formats', dest='formats',default='gpkg',help='List of formats e.g. gpkg,shp,kml (default: gpkg)')
 	parser.add_argument('-m','--mapping', dest='mapping',help='YAML mapping of features schema. If not specified, a default is used.')
 	parser.add_argument('-v','--verbose', action='store_true')
+	parser.add_argument('--omit-osm-ids', action='store_true')
 	parsed = parser.parse_args()
 
 	mapping = None
@@ -22,7 +23,7 @@ def main():
 	else:
 		default_mapping = os.path.join(os.path.dirname(__file__), '../mappings/default.yml')
 		with open(default_mapping,'r') as f:
-			mapping = Mapping(f.read())
+			mapping = Mapping(f.read(),default_osm_id=not parsed.omit_osm_ids)
 
 	formats = parsed.formats.split(',')
 	outputs = []

@@ -16,10 +16,10 @@ epsg_4326.ImportFromEPSG(4326)
 
 class Kml:
     class Layer:
-        def __init__(self,driver,file_name,theme_name,ogr_geom_type,keys):
-            self.columns = keys
+        def __init__(self,driver,file_name,ogr_geom_type,theme):
+            self.columns = theme.keys
             self.ds = driver.CreateDataSource(file_name + '.kml')
-            self.ogr_layer = self.ds.CreateLayer(theme_name, epsg_4326, ogr_geom_type)
+            self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type)
 
             for column in self.columns:
                 field_name = ogr.FieldDefn(column, ogr.OFTString)
@@ -35,18 +35,18 @@ class Kml:
         for t in mapping.themes:
             # if the theme has only one geom type, don't add a suffix to the layer name.
             if t.points and not t.lines and not t.polygons:
-                self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbPoint,t.keys)
+                self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name,ogr.wkbPoint,t)
             elif not t.points and t.lines and not t.polygons:
-                self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbLineString,t.keys)
+                self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name,ogr.wkbLineString,t)
             elif not t.points and not t.lines and t.polygons:
-                self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbMultiPolygon,t.keys)
+                self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name,ogr.wkbMultiPolygon,t)
             else:
                 if t.points:
-                    self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name + '_points',t.name,ogr.wkbPoint,t.keys)
+                    self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name + '_points',ogr.wkbPoint,t)
                 if t.lines:
-                    self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name + '_lines',t.name,ogr.wkbLineString,t.keys)
+                    self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name + '_lines',ogr.wkbLineString,t)
                 if t.polygons:
-                    self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name + '_polygons',t.name,ogr.wkbMultiPolygon,t.keys)
+                    self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name + '_polygons',ogr.wkbMultiPolygon,t)
 
     def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
@@ -62,13 +62,13 @@ class Kml:
 
 class Shapefile:
     class Layer:
-        def __init__(self,driver,name,ogr_geom_type,keys):
+        def __init__(self,driver,file_name,ogr_geom_type,theme):
             def launderName(col):
                 return re.sub(r'[^a-zA-Z0-9_]', '', col)[0:10]
 
-            self.columns = keys
-            self.ds = driver.CreateDataSource(name + '.shp')
-            self.ogr_layer = self.ds.CreateLayer('', epsg_4326, ogr_geom_type,options=['ENCODING=UTF-8'])
+            self.columns = theme.keys
+            self.ds = driver.CreateDataSource(file_name + '.shp')
+            self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type,options=['ENCODING=UTF-8'])
             self.launderedNames = {}
             for column in self.columns:
                 laundered_name = launderName(column)
@@ -86,18 +86,18 @@ class Shapefile:
         for t in mapping.themes:
             # if the theme has only one geom type, don't add a suffix to the layer name.
             if t.points and not t.lines and not t.polygons:
-                self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbPoint,t.keys)
+                self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbPoint,t)
             elif not t.points and t.lines and not t.polygons:
-                self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbLineString,t.keys)
+                self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbLineString,t)
             elif not t.points and not t.lines and t.polygons:
-                self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbMultiPolygon,t.keys)
+                self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name,ogr.wkbMultiPolygon,t)
             else:
                 if t.points:
-                    self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_points',ogr.wkbPoint,t.keys)
+                    self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_points',ogr.wkbPoint,t)
                 if t.lines:
-                    self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_lines',ogr.wkbLineString,t.keys)
+                    self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_lines',ogr.wkbLineString,t)
                 if t.polygons:
-                    self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_polygons',ogr.wkbMultiPolygon,t.keys)
+                    self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,output_name + '_' + t.name + '_polygons',ogr.wkbMultiPolygon,t)
 
     def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
@@ -113,9 +113,9 @@ class Shapefile:
 
 class Geopackage:
     class Layer:
-        def __init__(self,ds,name,ogr_geom_type,keys):
-            self.ogr_layer = ds.CreateLayer(name, epsg_4326, ogr_geom_type,options=['SPATIAL_INDEX=NO'])
-            self.columns = keys
+        def __init__(self,ds,ogr_geom_type,theme):
+            self.ogr_layer = ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type,options=['SPATIAL_INDEX=NO'])
+            self.columns = theme.keys
             for column_name in self.columns:
                 field_name = ogr.FieldDefn(column_name, ogr.OFTString)
                 field_name.SetWidth(254)
@@ -129,7 +129,7 @@ class Geopackage:
 
         self.layers = {}
         for theme in mapping.themes:
-            layer = Geopackage.Layer(self.ds,theme.name,ogr.wkbUnknown,theme.keys)
+            layer = Geopackage.Layer(self.ds,ogr.wkbUnknown,theme)
             if theme.points:
                 self.layers[(theme.name,GeomType.POINT)] = layer
             if theme.lines:
