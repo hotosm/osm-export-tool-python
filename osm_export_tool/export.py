@@ -14,6 +14,51 @@ create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
 epsg_4326 = ogr.osr.SpatialReference()
 epsg_4326.ImportFromEPSG(4326)
 
+class Kml:
+    class Layer:
+        def __init__(self,driver,file_name,theme_name,ogr_geom_type,keys):
+            self.columns = keys
+            self.ds = driver.CreateDataSource(file_name + '.kml')
+            self.ogr_layer = self.ds.CreateLayer(theme_name, epsg_4326, ogr_geom_type)
+            for column in self.columns:
+                field_name = ogr.FieldDefn(column, ogr.OFTString)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+
+            self.defn = self.ogr_layer.GetLayerDefn()
+
+    def __init__(self,output_name,mapping):
+        driver = ogr.GetDriverByName('KML')
+
+        self.layers = {}
+        for t in mapping.themes:
+            # if the theme has only one geom type, don't add a suffix to the layer name.
+            if t.points and not t.lines and not t.polygons:
+                self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbPoint,t.keys)
+            elif not t.points and t.lines and not t.polygons:
+                self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbLineString,t.keys)
+            elif not t.points and not t.lines and t.polygons:
+                self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name,t.name,ogr.wkbMultiPolygon,t.keys)
+            else:
+                if t.points:
+                    self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,output_name + '_' + t.name + '_points',t.name,ogr.wkbPoint,t.keys)
+                if t.lines:
+                    self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,output_name + '_' + t.name + '_lines',t.name,ogr.wkbLineString,t.keys)
+                if t.polygons:
+                    self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,output_name + '_' + t.name + '_polygons',t.name,ogr.wkbMultiPolygon,t.keys)
+
+    def write(self,layer_name,geom_type,geom,tags):
+        layer = self.layers[(layer_name,geom_type)]
+        feature = ogr.Feature(layer.defn)
+        feature.SetGeometry(geom)
+        for col in layer.columns:
+            if col in tags:
+                feature.SetField(col,tags[col])
+        layer.ogr_layer.CreateFeature(feature)
+
+    def finalize(self):
+        pass
+
 class Shapefile:
     class Layer:
         def __init__(self,driver,name,ogr_geom_type,keys):
