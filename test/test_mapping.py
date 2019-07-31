@@ -131,3 +131,45 @@ class TestMapping(unittest.TestCase):
         self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'height':21}))
         self.assertFalse(m.themes[0].matches(GeomType.POLYGON,{'height':20}))
 
+    def test_default_osm_id(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].osm_id)
+        self.assertFalse('osm_id' in m.themes[0].keys)
+        m = Mapping(y,default_osm_id=False)
+        self.assertFalse(m.themes[0].osm_id)
+
+    def test_osm_id_override(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+            - osm_id
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].osm_id)
+        self.assertFalse('osm_id' in m.themes[0].keys)
+        m = Mapping(y,default_osm_id=False)
+        self.assertTrue(m.themes[0].osm_id)
+        self.assertFalse('osm_id' in m.themes[0].keys)
+
+    def test_duplicate_key(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+            - building
+        '''
+        m = Mapping(y)
+        self.assertTrue(len(m.themes[0].keys) == 1)
+

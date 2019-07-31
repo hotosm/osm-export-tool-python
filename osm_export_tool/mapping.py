@@ -4,7 +4,7 @@ from osm_export_tool.sql import Matcher
 
 
 class Theme:
-	def __init__(self,name,d):
+	def __init__(self,name,d,default_osm_id):
 		self.name = name
 
 		# set geometry types.
@@ -23,7 +23,12 @@ class Theme:
 			if 'polygons' in d['types']:
 				self.polygons = True
 
-		self.keys = d['select']
+		self.keys = set(d['select'])
+
+		self.osm_id = default_osm_id
+		if 'osm_id' in self.keys:
+			self.osm_id = True
+			self.keys.remove('osm_id')
 
 		if 'where' in d:
 			if isinstance(d['where'],list):
@@ -49,9 +54,9 @@ class Theme:
 
 
 class Mapping:
-	def __init__(self,y):
+	def __init__(self,y,default_osm_id=True):
 		doc = yaml.safe_load(y)
 		self.themes = []
 		for theme_name, theme_dict in doc.items():
-			self.themes.append(Theme(theme_name,theme_dict))
+			self.themes.append(Theme(theme_name,theme_dict,default_osm_id=default_osm_id))
 

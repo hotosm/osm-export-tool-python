@@ -20,6 +20,7 @@ class Kml:
             self.columns = keys
             self.ds = driver.CreateDataSource(file_name + '.kml')
             self.ogr_layer = self.ds.CreateLayer(theme_name, epsg_4326, ogr_geom_type)
+
             for column in self.columns:
                 field_name = ogr.FieldDefn(column, ogr.OFTString)
                 field_name.SetWidth(254)
