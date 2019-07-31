@@ -1,4 +1,5 @@
 import osmium as o
+import re
 try:
     import ogr
 except ModuleNotFoundError:
@@ -16,13 +17,20 @@ epsg_4326.ImportFromEPSG(4326)
 class Shapefile:
     class Layer:
         def __init__(self,driver,name,ogr_geom_type,keys):
+            def launderName(col):
+                return re.sub(r'[^a-zA-Z0-9_]', '', col)[0:10]
+
             self.columns = keys
             self.ds = driver.CreateDataSource(name + '.shp')
-            self.ogr_layer = self.ds.CreateLayer('', epsg_4326, ogr_geom_type)
-            for column_name in self.columns:
-                field_name = ogr.FieldDefn(column_name, ogr.OFTString)
+            self.ogr_layer = self.ds.CreateLayer('', epsg_4326, ogr_geom_type,options=['ENCODING=UTF-8'])
+            self.launderedNames = {}
+            for column in self.columns:
+                laundered_name = launderName(column)
+                field_name = ogr.FieldDefn(laundered_name, ogr.OFTString)
                 field_name.SetWidth(254)
                 self.ogr_layer.CreateField(field_name)
+                self.launderedNames[column] = laundered_name
+
             self.defn = self.ogr_layer.GetLayerDefn()
 
     def __init__(self,output_name,mapping):
@@ -51,7 +59,7 @@ class Shapefile:
         feature.SetGeometry(geom)
         for col in layer.columns:
             if col in tags:
-                feature.SetField(col,tags[col])
+                feature.SetField(layer.launderedNames[col],tags[col])
         layer.ogr_layer.CreateFeature(feature)
 
     def finalize(self):
