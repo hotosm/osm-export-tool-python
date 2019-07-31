@@ -81,13 +81,20 @@ def _match(d,tags):
         return _match(d[1],tags) and _match(d[2],tags)
     elif op == '=':
         return d[1] in tags and tags[d[1]] == d[2]
-    elif op == '!=':
-        return d[1] not in tags or tags[d[1]] != d[2]
     elif op == 'notnull':
         return d[1] in tags
     elif op == 'in':
         return (d[1] in tags) and (tags[d[1]] in d[2])
-    print(d)
+    elif op == '!=':
+        return d[1] not in tags or tags[d[1]] != d[2]
+    elif op == '>':
+        return d[1] in tags and str(tags[d[1]]) > str(d[2])
+    elif op == '<':
+        return d[1] in tags and str(tags[d[1]]) < str(d[2])
+    elif op == '>=':
+        return d[1] in tags and str(tags[d[1]]) >= str(d[2])
+    elif op == '<=':
+        return d[1] in tags and str(tags[d[1]]) <= str(d[2])
     raise Exception
 
 class Matcher:

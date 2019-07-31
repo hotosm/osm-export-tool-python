@@ -118,3 +118,16 @@ class TestMapping(unittest.TestCase):
         m = Mapping(y)
         self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'building':'yes'}))
 
+    def test_gt(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+          where: height > 20
+        '''
+        m = Mapping(y)
+        self.assertTrue(m.themes[0].matches(GeomType.POLYGON,{'height':21}))
+        self.assertFalse(m.themes[0].matches(GeomType.POLYGON,{'height':20}))
+

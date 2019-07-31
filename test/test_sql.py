@@ -11,7 +11,6 @@ class TestSql(unittest.TestCase):
         s = SQLValidator("natural in ('water','cliff')")
         self.assertTrue(s.valid)
 
-    #TODO OGR uses text for all things so numerical comparisons will not be correct
     def test_float_value(self):
         s = SQLValidator("height > 20")
         self.assertTrue(s.valid)
