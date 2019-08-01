@@ -22,7 +22,7 @@ def main():
 		with open(parsed.mapping,'r') as f:
 			mapping_txt = f.read()
 	else:
-		default_mapping = os.path.join(os.path.dirname(__file__), '../mappings/default.yml')
+		default_mapping = os.path.join(os.path.dirname(__file__), 'mappings/default.yml')
 		with open(default_mapping,'r') as f:
 			mapping_txt = f.read()
 	
