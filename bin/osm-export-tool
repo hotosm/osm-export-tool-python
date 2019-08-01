@@ -41,7 +41,13 @@ def main():
 
 	for output in outputs:
 		output.finalize()
-	print(time.time() - start_time)
+
+	print('Completed in {0} seconds.'.format(time.time() - start_time))
+
+	for output in outputs:
+		for file in output.files:
+			print(file)
+
 
 if __name__ == '__main__':
 	main()
