@@ -8,6 +8,7 @@ try:
 except ModuleNotFoundError:
     print('ERROR: Install the version of python package GDAL that corresponds to gdalinfo --version on your system.')
     exit(1)
+from shapely.wkb import loads, dumps
 
 from osm_export_tool import GeomType
 
@@ -16,7 +17,6 @@ create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
 
 epsg_4326 = ogr.osr.SpatialReference()
 epsg_4326.ImportFromEPSG(4326)
-
 
 def GetHumanReadable(size,precision=2):
     suffixes=['B','KB','MB','GB','TB']
@@ -247,10 +247,11 @@ class Geopackage:
         self.ds = None
 
 class Handler(o.SimpleHandler):
-    def __init__(self,outputs,mapping):
+    def __init__(self,outputs,mapping,clipping_geom=None):
         super(Handler, self).__init__()
         self.outputs = outputs
         self.mapping = mapping
+        self.clipping_geom = clipping_geom
 
     def node(self,n):
         if len(n.tags) == 0:
@@ -259,7 +260,12 @@ class Handler(o.SimpleHandler):
         for theme in self.mapping.themes:
             if theme.matches(GeomType.POINT,n.tags):
                 if not geom:
-                    geom = create_geom(fab.create_point(n))
+                    wkb = fab.create_point(n)
+                    if self.clipping_geom:
+                        sg = loads(bytes.fromhex(wkb))
+                        if not self.clipping_geom.intersects(sg):
+                            return
+                    geom = create_geom(wkb)
                 for output in self.outputs:
                     output.write(n.id,theme.name,GeomType.POINT,geom,n.tags)
 
@@ -273,7 +279,13 @@ class Handler(o.SimpleHandler):
             for theme in self.mapping.themes:
                 if theme.matches(GeomType.LINE,w.tags):
                     if not geom:
-                        geom = create_geom(fab.create_linestring(w))
+                        wkb = fab.create_linestring(w)
+                        if self.clipping_geom:
+                            sg = loads(bytes.fromhex(wkb))
+                            sg = self.clipping_geom.intersection(sg)
+                            geom = ogr.CreateGeometryFromWkb(dumps(sg))
+                        else:
+                            geom = create_geom(wkb)
                     for output in self.outputs:
                         output.write(w.id,theme.name,GeomType.LINE,geom,w.tags)
         except RuntimeError:
@@ -290,7 +302,13 @@ class Handler(o.SimpleHandler):
             for theme in self.mapping.themes:
                 if theme.matches(GeomType.POLYGON,a.tags):
                     if not geom:
-                        geom = create_geom(fab.create_multipolygon(a))
+                        wkb = fab.create_multipolygon(a)
+                        if self.clipping_geom:
+                            sg = loads(bytes.fromhex(wkb))
+                            sg = self.clipping_geom.intersection(sg)
+                            geom = ogr.CreateGeometryFromWkb(dumps(sg))
+                        else:
+                            geom = create_geom(wkb)
                     for output in self.outputs:
                         output.write(osm_id,theme.name,GeomType.POLYGON,geom,a.tags)
         except RuntimeError:
