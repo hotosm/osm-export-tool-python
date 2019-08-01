@@ -16,14 +16,16 @@ def main():
 	parser.add_argument('--omit-osm-ids', action='store_true')
 	parsed = parser.parse_args()
 
-	mapping = None
+	mapping_txt = None
 	if parsed.mapping:
 		with open(parsed.mapping,'r') as f:
-			mapping = Mapping(f.read())
+			mapping_txt = f.read()
 	else:
 		default_mapping = os.path.join(os.path.dirname(__file__), '../mappings/default.yml')
 		with open(default_mapping,'r') as f:
-			mapping = Mapping(f.read(),default_osm_id=not parsed.omit_osm_ids)
+			mapping_txt = f.read()
+	
+	mapping = Mapping(mapping_txt,default_osm_id=not parsed.omit_osm_ids)
 
 	formats = parsed.formats.split(',')
 	outputs = []

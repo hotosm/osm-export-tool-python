@@ -21,6 +21,14 @@ class Kml:
             self.ds = driver.CreateDataSource(file_name + '.kml')
             self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type)
 
+            if theme.osm_id:
+                self.osm_id = True
+                field_name = ogr.FieldDefn('osm_id', ogr.OFTInteger64)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+            else:
+                self.osm_id = False
+
             for column in self.columns:
                 field_name = ogr.FieldDefn(column, ogr.OFTString)
                 field_name.SetWidth(254)
@@ -52,6 +60,8 @@ class Kml:
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
+        if layer.osm_id:
+            feature.SetField('osm_id',osm_id)
         for col in layer.columns:
             if col in tags:
                 feature.SetField(col,tags[col])
@@ -69,6 +79,15 @@ class Shapefile:
             self.columns = theme.keys
             self.ds = driver.CreateDataSource(file_name + '.shp')
             self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type,options=['ENCODING=UTF-8'])
+
+            if theme.osm_id:
+                self.osm_id = True
+                field_name = ogr.FieldDefn('osm_id', ogr.OFTInteger64)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+            else:
+                self.osm_id = False
+
             self.launderedNames = {}
             for column in self.columns:
                 laundered_name = launderName(column)
@@ -103,6 +122,8 @@ class Shapefile:
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
+        if layer.osm_id:
+            feature.SetField('osm_id',osm_id)
         for col in layer.columns:
             if col in tags:
                 feature.SetField(layer.launderedNames[col],tags[col])
@@ -115,6 +136,15 @@ class Geopackage:
     class Layer:
         def __init__(self,ds,ogr_geom_type,theme):
             self.ogr_layer = ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type,options=['SPATIAL_INDEX=NO'])
+
+            if theme.osm_id:
+                self.osm_id = True
+                field_name = ogr.FieldDefn('osm_id', ogr.OFTInteger64)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+            else:
+                self.osm_id = False
+
             self.columns = theme.keys
             for column_name in self.columns:
                 field_name = ogr.FieldDefn(column_name, ogr.OFTString)
@@ -141,6 +171,8 @@ class Geopackage:
         layer = self.layers[(layer_name,geom_type)]
         feature = ogr.Feature(layer.defn)
         feature.SetGeometry(geom)
+        if layer.osm_id:
+            feature.SetField('osm_id',osm_id)
         for column_name in layer.columns:
             if column_name in tags:
                 feature.SetField(column_name,tags[column_name])
