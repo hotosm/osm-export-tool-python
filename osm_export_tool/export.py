@@ -26,6 +26,18 @@ def GetHumanReadable(size,precision=2):
         size = size/1024.0 #apply the division
     return "%.*f%s"%(precision,size,suffixes[suffixIndex])
 
+
+CLOSED_WAY_KEYS = ['aeroway','amenity','boundary','building','building:part','craft','geological','historic','landuse','leisure','military','natural','office','place','shop','sport','tourism']
+CLOSED_WAY_KEYVALS = {'highway':'platform','public_transport':'platform'}
+def closed_way_is_polygon(tags):
+    for key in CLOSED_WAY_KEYS:
+        if key in tags:
+            return True
+    for key, val in CLOSED_WAY_KEYVALS.items():
+        if key in tags and tags[key] == val:
+            return True
+    return False
+
 class File:
     def __init__(self,output_name,parts):
         self.output_name = output_name
@@ -254,6 +266,8 @@ class Handler(o.SimpleHandler):
     def way(self, w):
         if len(w.tags) == 0:
             return
+        if w.is_closed() and closed_way_is_polygon(w.tags): # this will be handled in area()
+            return
         try:
             geom = None
             for theme in self.mapping.themes:
@@ -267,6 +281,8 @@ class Handler(o.SimpleHandler):
 
     def area(self,a):
         if len(a.tags) == 0:
+            return
+        if not closed_way_is_polygon(a.tags):
             return
         osm_id = a.orig_id() if a.from_way() else -a.orig_id()
         try:
