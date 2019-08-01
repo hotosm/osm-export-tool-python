@@ -316,7 +316,7 @@ class Handler(o.SimpleHandler):
                                 return
                             multipolygon = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
-                            multipolygon = [create_geom(wkb)]
+                            multipolygon = create_geom(wkb)
                     for output in self.outputs:
                         output.write(osm_id,theme.name,GeomType.POLYGON,multipolygon,a.tags)
         except RuntimeError:

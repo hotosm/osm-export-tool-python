@@ -35,7 +35,10 @@ def main():
 		with open(parsed.clip,'r') as f:
 			j = json.loads(f.read())
 			if j['type'] == 'FeatureCollection':
+				print("Warning: using first feature of --clip FeatureCollection.")
 				clipping_geom = shape(j['features'][0]['geometry'])
+			else:
+				clipping_geom = shape(j)
 
 	formats = parsed.formats.split(',')
 	outputs = []
