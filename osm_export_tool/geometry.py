@@ -36,8 +36,6 @@ def parse_poly(lines):
             coords.append([[], []])
             ring = coords[-1][0]
             in_ring = True
-
-    print(coords)
     
     return MultiPolygon(coords)
 
