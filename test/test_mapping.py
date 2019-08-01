@@ -173,3 +173,118 @@ class TestMapping(unittest.TestCase):
         m = Mapping(y)
         self.assertTrue(len(m.themes[0].keys) == 1)
 
+class TestMappingValidation(unittest.TestCase):
+    def test_empty_yaml(self):
+        y = '''
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_bad_yaml(self):
+        y = '''
+        buildings
+          types:
+            - polygons
+          select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_no_select(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_invalid_type(self):
+        y = '''
+        buildings:
+          types:
+            - polygon
+          select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_empty_sql(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+          where:
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_invalid_sql(self):
+        y = '''
+        buildings:
+          types:
+            - polygons
+          select:
+            - building
+          where: XXX aaa
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_wrong_yaml_list(self):
+        y = '''
+        buildings:
+          types: polygons
+          select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_invalid_yaml_parse(self):
+        y = '''
+        buildings:
+           - types: 
+             - polygons
+          select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+
+    def test_wrong_yaml_parse(self):
+        y = '''
+        buildings:
+          - types: 
+            - polygons
+          - select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
+        self.assertTrue('must be YAML dict' in errors[0])
+
+    def test_wrong_toplevel_themes(self):
+        y = '''
+         - buildings:
+            types: 
+            - polygons
+            select:
+            - building
+        '''
+        m, errors = Mapping.validate(y)
+        self.assertTrue(m is None)
+        self.assertTrue(len(errors) == 1)
