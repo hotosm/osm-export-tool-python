@@ -23,7 +23,7 @@ amenities:
     - name
     - amenity
   where:
-    - amenity in ('university','school','library','fuel','hospital','fire_station','police','townhall')
+    - amenity IN ('university','school','library','fuel','hospital','fire_station','police','townhall')
 
 barrierpoints:
   types:
@@ -32,7 +32,7 @@ barrierpoints:
     - name
     - barrier
   where:
-    - barrier IS NOT NULL
+    - barrier IN ('block','bollard','cattle_grid','chain','cycle_barrier','entrance','horse_stile','gate','spikes','lift_gate','kissing_gate','fence','yes','wire_fence','toll_booth','stile')
 
 barrierways:
   types:
@@ -41,7 +41,7 @@ barrierways:
     - name
     - barrier
   where:
-    - barrier IS NOT NULL
+    - barrier IN ('city_wall','fence','hedge','retaining_wall','wall','bollard','gate','spikes','lift_gate','kissing_gate','embankment','yes','wire_fence')
 
 buildings:
   types:
@@ -94,7 +94,17 @@ landusages:
     - place
     - tourism
   where:
-    - aeroway IN ('runway','taxiway') OR amenity IS NOT NULL OR barrier = 'hedge' OR highway IN ('pedestrian','footway') OR landuse IS NOT NULL or leisure IS NOT NULL or man_made = 'pier' OR military = 'barracks' OR natural IS NOT NULL or place = 'island' OR tourism = 'zoo'
+    - aeroway IN ('runway','taxiway') 
+    - amenity IN ('university','school','college','library','fuel','parking','cinema','theatre','place_of_worship','hospital')
+    - barrier = 'hedge' 
+    - highway IN ('pedestrian','footway') 
+    - landuse IN ('park','forest','residential','retail','commercial','industrial','railway','cemetery','grass','farmyard','farm','farmland','orchard','vineyard','wood','meadow','village_green','recreation_ground','allotments','quarry')
+    - leisure IN ('park','garden','playground','golf_course','sports_centre','pitch','stadium','common','nature_reserve')
+    - man_made = 'pier'
+    - military = 'barracks' 
+    - natural IN ('wood','land','scrub','wetland','heath')
+    - place = 'island'
+    - tourism = 'zoo'
 
 places:
   types:
@@ -104,7 +114,7 @@ places:
     - place
     - population
   where:
-    - place IS NOT NULL
+    - place IN ('country','state','region','county','city','town','village','hamlet','suburb','locality')
 
 roads:
   types:
@@ -121,7 +131,9 @@ roads:
     - highway
     - man_made
   where:
-    - railway IS NOT NULL OR highway IS NOT NULL OR man_made in ('pier','groyne')
+    - railway IN ('rail','tram','light_rail','subway','narrow_gauge','preserved','funicular','monorail','disused')
+    - highway IN ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','road','path','track','service','footway','bridleway','cycleway','steps','pedestrian','living_street','unclassified','residential','raceway')
+    - man_made IN ('pier','groyne')
 
 transport_areas:
   types:
@@ -131,7 +143,8 @@ transport_areas:
     - aeroway
     - railway
   where:
-    - aeroway IN ('aerodrome','terminal','helipad','apron') OR railway IN ('station','platform')
+    - aeroway IN ('aerodrome','terminal','helipad','apron')
+    - railway IN ('station','platform')
 
 transport_points:
   types:
@@ -142,7 +155,9 @@ transport_points:
     - highway
     - railway
   where:
-    - aeroway IN ('aerodrome','terminal','helipad','gate') OR highway IN ('motorway_junction','turning_circle','bus_stop') OR railway IN ('station','halt','tram_stop','crossing','level_crossing','subway_entrance')
+    - aeroway IN ('aerodrome','terminal','helipad','gate') 
+    - highway IN ('motorway_junction','turning_circle','bus_stop') 
+    - railway IN ('station','halt','tram_stop','crossing','level_crossing','subway_entrance')
 
 waterareas:
   types:
@@ -155,7 +170,11 @@ waterareas:
     - natural
     - waterway
   where:
-    - amenity = 'swimming_pool' OR landuse IN ('basin','reservoir') OR leisure = 'swimming_pool' OR natural = 'water' OR waterway = 'riverbank'
+    - amenity = 'swimming_pool'
+    - landuse IN ('basin','reservoir')
+    - leisure = 'swimming_pool'
+    - natural = 'water'
+    - waterway = 'riverbank'
 
 waterways:
   types:
@@ -165,5 +184,6 @@ waterways:
     - barrier
     - waterway
   where:
-    - barrier = 'ditch' OR waterway IN ('stream','river','canal','drain','ditch')
+    - barrier = 'ditch'
+    - waterway IN ('stream','river','canal','drain','ditch')
 
