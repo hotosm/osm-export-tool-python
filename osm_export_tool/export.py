@@ -275,19 +275,25 @@ class Handler(o.SimpleHandler):
         if w.is_closed() and closed_way_is_polygon(w.tags): # this will be handled in area()
             return
         try:
-            geom = None
+            # NOTE: it is possible this is actually a MultiLineString
+            # in the case where a LineString is clipped by the clipping geom,
+            # or the way is self-intersecting
+            # but GDAL and QGIS seem to handle it OK.
+            linestring = None
             for theme in self.mapping.themes:
                 if theme.matches(GeomType.LINE,w.tags):
-                    if not geom:
+                    if not linestring:
                         wkb = fab.create_linestring(w)
                         if self.clipping_geom:
                             sg = loads(bytes.fromhex(wkb))
                             sg = self.clipping_geom.intersection(sg)
-                            geom = ogr.CreateGeometryFromWkb(dumps(sg))
+                            if sg.is_empty:
+                                return
+                            linestring = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
-                            geom = create_geom(wkb)
+                            linestring = create_geom(wkb)
                     for output in self.outputs:
-                        output.write(w.id,theme.name,GeomType.LINE,geom,w.tags)
+                        output.write(w.id,theme.name,GeomType.LINE,linestring,w.tags)
         except RuntimeError:
             print("Incomplete way: {0}".format(w.id))
 
@@ -298,19 +304,21 @@ class Handler(o.SimpleHandler):
             return
         osm_id = a.orig_id() if a.from_way() else -a.orig_id()
         try:
-            geom = None
+            multipolygon = None
             for theme in self.mapping.themes:
                 if theme.matches(GeomType.POLYGON,a.tags):
-                    if not geom:
+                    if not multipolygon:
                         wkb = fab.create_multipolygon(a)
                         if self.clipping_geom:
                             sg = loads(bytes.fromhex(wkb))
                             sg = self.clipping_geom.intersection(sg)
-                            geom = ogr.CreateGeometryFromWkb(dumps(sg))
+                            if sg.is_empty:
+                                return
+                            multipolygon = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
-                            geom = create_geom(wkb)
+                            multipolygon = [create_geom(wkb)]
                     for output in self.outputs:
-                        output.write(osm_id,theme.name,GeomType.POLYGON,geom,a.tags)
+                        output.write(osm_id,theme.name,GeomType.POLYGON,multipolygon,a.tags)
         except RuntimeError:
             print('Invalid area: {0}'.format(a.orig_id()))
 
