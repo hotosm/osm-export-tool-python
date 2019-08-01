@@ -3,11 +3,7 @@ import os
 import re
 
 import osmium as o
-try:
-    import ogr
-except ModuleNotFoundError:
-    print('ERROR: Install the version of python package GDAL that corresponds to gdalinfo --version on your system.')
-    exit(1)
+import ogr
 from shapely.wkb import loads, dumps
 
 from osm_export_tool import GeomType
