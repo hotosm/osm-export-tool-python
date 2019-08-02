@@ -51,6 +51,7 @@ All the below flags are optional.
 	* Invalid examples:
 		* `20 < height`
 		* `building > height`
+* More examples can be found in the [mappings directory](osm_export_tool/mappings).
 * if the `types` key is omitted, it defaults to `points`, `lines` and `polygons`.
 * At least one tag is required as a child of the `select` key.
 * If the `where` key is omitted, it defaults to choosing all features where any of the `select`ed keys are present.
