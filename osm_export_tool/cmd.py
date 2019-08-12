@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import argparse
-import osm_export_tool.export as export
+import osm_export_tool.tabular as tabular
 from osm_export_tool.mapping import Mapping
 from osm_export_tool.geometry import load_geometry
 
@@ -34,22 +34,33 @@ def main():
 			clipping_geom = load_geometry(f.read())
 
 	formats = parsed.formats.split(',')
-	outputs = []
+	
+	tabular_outputs = []
 	if 'gpkg' in formats:
-		outputs.append(export.Geopackage(parsed.output_name,mapping))
+		tabular_outputs.append(tabular.Geopackage(parsed.output_name,mapping))
 	if 'shp' in formats:
-		outputs.append(export.Shapefile(parsed.output_name,mapping))
+		tabular_outputs.append(tabular.Shapefile(parsed.output_name,mapping))
 	if 'kml' in formats:
-		outputs.append(export.Kml(parsed.output_name,mapping))
-	h = export.Handler(outputs,mapping,clipping_geom=clipping_geom)
+		tabular_outputs.append(tabular.Kml(parsed.output_name,mapping))
+
+	nontabular_outputs = []
+	if 'mwm' in formats:
+		nontabular_outputs.append(nontabular.Omim())
+	if 'img' in formats:
+		nontabular_outputs.append(nontabular.GarminIMG())
+	if 'osmand' in formats:
+		nontabular_outputs.append(nontabular.Osmand())
+
+	h = tabular.Handler(tabular_outputs,mapping,clipping_geom=clipping_geom)
 	start_time = time.time()
 	h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
 
-	for output in outputs:
+	for output in tabular_outputs:
 		output.finalize()
+
 
 	print('Completed in {0} seconds.'.format(time.time() - start_time))
 
-	for output in outputs:
+	for output in tabular_outputs:
 		for file in output.files:
 			print(file)
