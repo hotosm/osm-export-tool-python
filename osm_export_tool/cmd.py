@@ -3,6 +3,7 @@ import sys
 import time
 import argparse
 import osm_export_tool.tabular as tabular
+import osm_export_tool.nontabular as nontabular
 from osm_export_tool.mapping import Mapping
 from osm_export_tool.geometry import load_geometry
 
@@ -48,19 +49,22 @@ def main():
 		nontabular_outputs.append(nontabular.Omim())
 	if 'img' in formats:
 		nontabular_outputs.append(nontabular.GarminIMG())
-	if 'osmand' in formats:
+	if 'obf' in formats:
 		nontabular_outputs.append(nontabular.Osmand())
 
-	h = tabular.Handler(tabular_outputs,mapping,clipping_geom=clipping_geom)
-	start_time = time.time()
-	h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
+	if len(tabular_outputs) > 0:
+		h = tabular.Handler(tabular_outputs,mapping,clipping_geom=clipping_geom)
+		start_time = time.time()
+		h.apply_file(parsed.osm_file, locations=True, idx='sparse_file_array')
 
-	for output in tabular_outputs:
-		output.finalize()
+		for output in tabular_outputs:
+			output.finalize()
+		print('Completed in {0} seconds.'.format(time.time() - start_time))
 
+		for output in tabular_outputs:
+			for file in output.files:
+				print(file)
 
-	print('Completed in {0} seconds.'.format(time.time() - start_time))
-
-	for output in tabular_outputs:
-		for file in output.files:
-			print(file)
+	if len(nontabular_outputs) > 0:
+		for output in nontabular_outputs:
+			output.run(pbf,tmpdir)
