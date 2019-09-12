@@ -14,11 +14,13 @@ class File:
         return self._path
 
 class Overpass:
-    def __init__(self,hostname,geom,path,use_existing=True):
+    def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert'):
         self.hostname = hostname
         self._path = path
         self.geom = geom
         self.use_existing = use_existing
+        self.osmconvert_path = osmconvert_path
+        self.tmp_path = 'tmp.osm.xml'
 
     def fetch(self):
         # TODO find the hull of a MultiPolygon
@@ -30,8 +32,12 @@ class Overpass:
         data = basic_template.substitute(maxsize=21474848,timeout=1600,query=query)
 
         with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
-            with open(self._path, 'wb') as f:
+            with open(self.tmp_path, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
+
+        # run osmconvert on the file
+        subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+
 
     def path(self):
         if os.path.isfile(self._path) and self.use_existing:
