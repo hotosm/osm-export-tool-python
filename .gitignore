@@ -9,3 +9,5 @@ venv
 build
 dist
 files
+examples/tmp
+examples/tools

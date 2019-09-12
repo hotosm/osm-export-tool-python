@@ -31,6 +31,7 @@ class Overpass:
         query = query_template.substitute(geom=poly)
         data = basic_template.substitute(maxsize=21474848,timeout=1600,query=query)
 
+        # TODO error handling
         with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
             with open(self.tmp_path, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)

@@ -34,7 +34,7 @@ class Osmand:
         pathlib.Path(join(self.tempdir,'osmand')).mkdir(parents=True, exist_ok=True)
 
         try:
-            os.link(self.input_pbf,join(self.tempdir,"/osmand/osmand.osm.pbf"))
+            os.link(self.input_pbf,join(self.tempdir,'osmand','osmand.osm.pbf'))
         except:
             pass
 
@@ -100,3 +100,7 @@ class Garmin:
             '--draw-priority=100',
             '--read-config={0}/template.args'.format(self.tempdir)
         ])
+
+
+class Mbtiles:
+    pass
