@@ -26,8 +26,10 @@ with open('../osm_export_tool/mappings/default.yml','r') as f:
 	mapping_txt = f.read()
 mapping = Mapping(mapping_txt)
 
-tabular_outputs = []
-tabular_outputs.append(tabular.Geopackage("blah",mapping))
+shp = tabular.Shapefile("tmp/blah",mapping)
+gpkg = tabular.Geopackage("tmp/blah",mapping)
+kml = tabular.Kml("tmp/blah",mapping)
+tabular_outputs = [shp,gpkg,kml]
 
 h = tabular.Handler(tabular_outputs,mapping)
 
