@@ -21,7 +21,7 @@ class Overpass:
         self.geom = geom
         self.use_existing = use_existing
         self.osmconvert_path = osmconvert_path
-        self.tmp_path = 'tmp.osm.xml'
+        self.tmp_path = os.path.join(tempdir,'tmp.osm.xml')
 
     def fetch(self):
         basic_template = Template('[maxsize:$maxsize][timeout:$timeout];$query;out meta;')
@@ -51,6 +51,7 @@ class Overpass:
 
         # run osmconvert on the file
         subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+        os.remove(self.tmp_path)
 
     def path(self):
         if os.path.isfile(self._path) and self.use_existing:
