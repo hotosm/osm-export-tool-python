@@ -197,8 +197,8 @@ class Shapefile:
 
 class Geopackage:
     class Layer:
-        def __init__(self,ds,ogr_geom_type,theme):
-            self.ogr_layer = ds.CreateLayer(theme.name, epsg_4326, ogr_geom_type,options=['SPATIAL_INDEX=NO'])
+        def __init__(self,ds,theme):
+            self.ogr_layer = ds.CreateLayer(theme.name, epsg_4326, ogr.wkbUnknown,options=['SPATIAL_INDEX=NO'])
 
             if theme.osm_id:
                 self.osm_id = True
@@ -223,7 +223,7 @@ class Geopackage:
         self.files = [File('gpkg',[output_name + '.gpkg'],'')]
         self.layers = {}
         for theme in mapping.themes:
-            layer = Geopackage.Layer(self.ds,ogr.wkbUnknown,theme)
+            layer = Geopackage.Layer(self.ds,theme)
             if theme.points:
                 self.layers[(theme.name,GeomType.POINT)] = layer
             if theme.lines:
@@ -246,6 +246,59 @@ class Geopackage:
         self.ds.CommitTransaction()
         self.layers = None
         self.ds = None
+
+# special case where each theme is a separate geopackage, for legacy reasons
+class MultiGeopackage:
+    class Layer:
+        def __init__(self,output_name,theme):
+            driver = ogr.GetDriverByName('GPKG')
+            self.ds = driver.CreateDataSource(output_name + '_' + theme.name + '.gpkg')
+            self.ds.StartTransaction()
+            self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr.wkbUnknown,options=['SPATIAL_INDEX=NO'])
+
+            if theme.osm_id:
+                self.osm_id = True
+                field_name = ogr.FieldDefn('osm_id', ogr.OFTInteger64)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+            else:
+                self.osm_id = False
+
+            self.columns = theme.keys
+            for column_name in self.columns:
+                field_name = ogr.FieldDefn(column_name, ogr.OFTString)
+                field_name.SetWidth(254)
+                self.ogr_layer.CreateField(field_name)
+            self.defn = self.ogr_layer.GetLayerDefn()
+
+    def __init__(self,output_name,mapping):
+        self.files = []
+        self.layers = {}
+        for theme in mapping.themes:
+            layer = MultiGeopackage.Layer(output_name, theme)
+            self.files.append(File('gpkg',[output_name + '_' + theme.name + '.gpkg'],theme.name))
+            if theme.points:
+                self.layers[(theme.name,GeomType.POINT)] = layer
+            if theme.lines:
+                self.layers[(theme.name,GeomType.LINE)] = layer
+            if theme.polygons:
+                self.layers[(theme.name,GeomType.POLYGON)] = layer
+
+    def write(self,osm_id,layer_name,geom_type,geom,tags):
+        layer = self.layers[(layer_name,geom_type)]
+        feature = ogr.Feature(layer.defn)
+        feature.SetGeometry(geom)
+        if layer.osm_id:
+            feature.SetField('osm_id',osm_id)
+        for column_name in layer.columns:
+            if column_name in tags:
+                feature.SetField(column_name,tags[column_name])
+        layer.ogr_layer.CreateFeature(feature)
+
+    def finalize(self):
+        for k, layer in self.layers.items():
+            layer.ds.CommitTransaction()
+        self.layers = None
 
 class Handler(o.SimpleHandler):
     def __init__(self,outputs,mapping,clipping_geom=None):
