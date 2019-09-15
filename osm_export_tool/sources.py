@@ -55,17 +55,17 @@ class Overpass:
     def sql(cls,str):
         return cls.parts(to_prefix(str))
 
-    def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert'):
+    def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert',mapping=None):
         self.hostname = hostname
         self._path = path
         self.geom = geom
         self.use_existing = use_existing
         self.osmconvert_path = osmconvert_path
         self.tmp_path = os.path.join(tempdir,'tmp.osm.xml')
+        self.mapping = mapping
 
     def fetch(self):
-        basic_template = Template('[maxsize:$maxsize][timeout:$timeout];$query;out meta;')
-        query_template = Template('(node($geom);<;>>;>;)')
+        base_template = Template('[maxsize:$maxsize][timeout:$timeout];$query;out meta;')
 
         if self.geom.geom_type == 'Polygon':
             geom = 'poly:"{0}"'.format(' '.join(['{1} {0}'.format(*x) for x in self.geom.exterior.coords]))
@@ -77,8 +77,26 @@ class Overpass:
             north = min(bounds[3], 90)
             geom = '{1},{0},{3},{2}'.format(west, south, east, north)
 
-        query = query_template.substitute(geom=geom)
-        data = basic_template.substitute(maxsize=21474848,timeout=1600,query=query)
+        if self.mapping:
+            query = """(
+                (
+                    {0}
+                );
+                (
+                    {1}
+                );>;
+                (
+                    {2}
+                );>>;>;)"""
+            nodes,ways,relations = Overpass.filters(self.mapping)
+            nodes = '\n'.join(['node({0}){1};'.format(geom,f) for f in nodes])
+            ways = '\n'.join(['way({0}){1};'.format(geom,f) for f in ways])
+            relations = '\n'.join(['relation({0}){1};'.format(geom,f) for f in relations])
+            query = query.format(nodes,ways,relations)
+        else:
+            query = Template('(node({0});<;>>;>;)').format(geom)
+
+        data = base_template.substitute(maxsize=21474848,timeout=1600,query=query)
 
         with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
             with open(self.tmp_path, 'wb') as f:

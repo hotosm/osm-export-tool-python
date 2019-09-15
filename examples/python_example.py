@@ -21,11 +21,12 @@ GEOJSON = """{
 
 geom = load_geometry(GEOJSON)
 tempdir = 'tmp'
-source = Overpass('http://overpass.hotosm.org',geom,join(tempdir,'overpass.osm.pbf'),tempdir=tempdir)
 
 with open('../osm_export_tool/mappings/default.yml','r') as f:
 	mapping_txt = f.read()
 mapping = Mapping(mapping_txt)
+
+source = Overpass('http://overpass.hotosm.org',geom,join(tempdir,'overpass.osm.pbf'),tempdir=tempdir,mapping=mapping)
 
 shp = tabular.Shapefile("tmp/example",mapping)
 gpkg = tabular.Geopackage("tmp/example",mapping)
