@@ -42,7 +42,7 @@ for output in tabular_outputs:
 
 osmand_files = nontabular.osmand(source.path(),'/usr/local/OsmAndMapCreator',tempdir=tempdir)
 garmin_files = nontabular.garmin(source.path(),'/usr/local/splitter/splitter.jar','/usr/local/mkgmap/mkgmap.jar',tempdir=tempdir)
-mwm_files = nontabular.mwm(source.path(),join(tempdir,'mwm'),'generate_mwm.sh','/usr/local/bin/generator_tool','/usr/bin/osmconvert').run()
+mwm_files = nontabular.mwm(source.path(),join(tempdir,'mwm'),'generate_mwm.sh','/usr/local/bin/generator_tool','/usr/bin/osmconvert')
 
 print(shp.files)
 print(gpkg.files)
