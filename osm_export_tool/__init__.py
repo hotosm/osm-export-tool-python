@@ -1,6 +1,7 @@
-name = 'osm_export_tool'
-
+import os
 from enum import Enum
+
+name = 'osm_export_tool'
 
 class GeomType(Enum):
     POINT = 1

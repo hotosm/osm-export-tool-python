@@ -2,6 +2,7 @@ import os
 from os.path import join
 import pathlib
 import subprocess
+from osm_export_tool import File
 
 def osmand(input_pbf,map_creator_dir,tempdir=None,jvm_mem=[256,2048]):
     BATCH_XML = """<?xml version="1.0" encoding="utf-8"?>
@@ -42,7 +43,7 @@ def osmand(input_pbf,map_creator_dir,tempdir=None,jvm_mem=[256,2048]):
         'net.osmand.util.IndexBatchCreator',
         join(tempdir,'batch.xml')
     ])
-    return [join(tempdir,'Osmand_2.obf')]
+    return [File('osmand_obf',[join(tempdir,'Osmand_2.obf')],'')]
 
 def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
     """
@@ -85,7 +86,7 @@ def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
         '--draw-priority=100',
         '--read-config={0}/template.args'.format(tempdir)
     ])
-    return [join(tempdir,'gmapsupp.img')]
+    return [File('garmin',[join(tempdir,'gmapsupp.img')],'')]
 
 def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_path):
     base_name = (os.path.basename(input_pbf).split(os.extsep))[0]
@@ -95,4 +96,4 @@ def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_pa
         generate_mwm_path,
         input_pbf
     ],env=env)
-    return [join(output_dir,base_name + '.mwm')]
+    return [File('mwm',[join(output_dir,base_name + '.mwm')],'')]
