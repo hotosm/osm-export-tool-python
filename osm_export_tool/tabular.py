@@ -6,22 +6,12 @@ import osmium as o
 import ogr
 from shapely.wkb import loads, dumps
 
-from osm_export_tool import GeomType
+from osm_export_tool import GeomType, File
 
 fab = o.geom.WKBFactory()
 create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
-
 epsg_4326 = ogr.osr.SpatialReference()
 epsg_4326.ImportFromEPSG(4326)
-
-def GetHumanReadable(size,precision=2):
-    suffixes=['B','KB','MB','GB','TB']
-    suffixIndex = 0
-    while size > 1024 and suffixIndex < 4:
-        suffixIndex += 1 #increment the index of the suffix
-        size = size/1024.0 #apply the division
-    return "%.*f%s"%(precision,size,suffixes[suffixIndex])
-
 
 CLOSED_WAY_KEYS = ['aeroway','amenity','boundary','building','building:part','craft','geological','historic','landuse','leisure','military','natural','office','place','shop','sport','tourism']
 CLOSED_WAY_KEYVALS = {'highway':'platform','public_transport':'platform'}
@@ -33,34 +23,6 @@ def closed_way_is_polygon(tags):
         if key in tags and tags[key] == val:
             return True
     return False
-
-# can be more than one file (example: Shapefile w/ sidecars)
-class File:
-    def __init__(self,output_name,parts,theme):
-        self.output_name = output_name
-        self.parts = parts
-        self.theme = theme
-
-    @classmethod
-    def shp(cls,name,theme):
-        parts = [name + '.shp']
-        parts.append(name + '.shx')
-        parts.append(name + '.prj')
-        parts.append(name + '.cpg')
-        parts.append(name + '.dbf')
-        return cls('shp',parts,theme)
-
-    def size(self):
-        total = 0
-        for part in self.parts:
-            total = total + os.path.getsize(part)
-        return total
-
-    def __str__(self):
-        return '{0} {1} {2} {3}'.format(self.output_name,self.theme,','.join(self.parts),GetHumanReadable(self.size()))
-
-    def __repr__(self):
-        return self.__str__()
 
 class Kml:
     class Layer:
