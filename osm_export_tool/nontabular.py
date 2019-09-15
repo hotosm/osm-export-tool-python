@@ -102,13 +102,17 @@ class Garmin:
         ])
 
 class Mwm:
-    def __init__(self,input_pbf,generate_mwm_path,tempdir=None):
+    def __init__(self,input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_path):
         self.input_pbf = input_pbf
+        self.output_dir = output_dir
         self.generate_mwm_path = generate_mwm_path
+        self.generator_tool_path = generator_tool_path
+        self.osmconvert_path = osmconvert_path
 
     def run(self):
+        env = os.environ.copy()
+        env.update(OSMCONVERT=self.osmconvert_path,TARGET=self.output_dir,GENERATOR_TOOL=self.generator_tool_path)
         subprocess.check_call([
             self.generate_mwm_path,
             self.input_pbf
-        ])
-
+        ],env=env)

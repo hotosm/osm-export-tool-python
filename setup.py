@@ -9,7 +9,8 @@ requirements = [
     'osmium~=2.15',
     'pyparsing~=2.4',
     'pyyaml',
-    'shapely~=1.6'
+    'shapely~=1.6',
+    'requests~=2.22.0'
 ]
 
 if 'GDAL_VERSION' in os.environ:
