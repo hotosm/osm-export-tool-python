@@ -97,6 +97,24 @@ def _match(d,tags):
         return d[1] in tags and str(tags[d[1]]) <= str(d[2])
     raise Exception
 
+def to_prefix(sql):
+    def prefixform(d):
+        if 'or' in d:
+            return ('or',prefixform(d['condition']),prefixform(d['expression']))
+        elif 'and' in d:
+            return ('and',prefixform(d['condition']),prefixform(d['expression']))
+        elif 'condition' in d:
+            return prefixform(d['condition'])
+        elif 'expression' in d:
+            return prefixform(d['expression'])
+        elif 'binop' in d:
+            return (d['binop'],d['columnName'],d['rval'][0])
+        elif 'notnull' in d:
+            return ('notnull',d['columnName'])
+        elif 'in' in d:
+            return ('in',d['columnName'],d['rval'])
+    return prefixform(whereExpression.parseString(sql,parseAll=True).asDict())
+
 class Matcher:
     def __init__(self,expr):
         self.expr = expr
@@ -106,6 +124,10 @@ class Matcher:
 
     # returns a new matcher
     def union(self,other_matcher):
+        if other_matcher.expr == ():
+            return Matcher(self.expr)
+        if self.expr == ():
+            return Matcher(other_matcher.expr)
         return Matcher(('or',self.expr,other_matcher.expr))
 
     @classmethod
@@ -118,19 +140,4 @@ class Matcher:
 
     @classmethod
     def from_sql(cls,sql):
-        def prefixform(d):
-            if 'or' in d:
-                return ('or',prefixform(d['condition']),prefixform(d['expression']))
-            elif 'and' in d:
-                return ('and',prefixform(d['condition']),prefixform(d['expression']))
-            elif 'condition' in d:
-                return prefixform(d['condition'])
-            elif 'expression' in d:
-                return prefixform(d['expression'])
-            elif 'binop' in d:
-                return (d['binop'],d['columnName'],d['rval'][0])
-            elif 'notnull' in d:
-                return ('notnull',d['columnName'])
-            elif 'in' in d:
-                return ('in',d['columnName'],d['rval'])
-        return cls(prefixform(whereExpression.parseString(sql,parseAll=True).asDict()))
+        return cls(to_prefix(sql))

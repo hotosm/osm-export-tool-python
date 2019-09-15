@@ -69,6 +69,9 @@ class Theme:
 
 		return self.matcher.matches(tags)
 
+	def __repr__(self):
+		return self.name
+
 
 class Mapping:
 	def __init__(self,y,default_osm_id=True):

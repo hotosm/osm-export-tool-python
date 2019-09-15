@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import requests
 from string import Template
+from osm_export_tool.sql import to_prefix
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
 
@@ -14,7 +15,46 @@ class File:
         return self._path
 
 class Overpass:
-    # TODO optimize for tags via feature selection
+
+    @classmethod
+    def filters(cls,mapping):
+        nodes = set()
+        ways = set()
+        relations = set()
+        for t in mapping.themes:
+            parts = cls.parts(t.matcher.expr)
+            if t.points:
+                for part in parts:
+                    nodes.add(part)
+            if t.lines:
+                for part in parts:
+                    ways.add(part)
+            if t.polygons:
+                for part in parts:
+                    ways.add(part)
+                    relations.add(part)
+        return nodes,ways,relations
+
+    # force quoting of strings to handle keys with colons
+    @classmethod
+    def parts(cls, expr):
+        def _parts(prefix):
+            op = prefix[0]
+            if op == '=':
+                return ["['{0}'='{1}']".format(prefix[1],prefix[2])]
+            if op in ['<','>','<=','>='] or op == 'notnull':
+                return ["['{0}']".format(prefix[1])]
+            if op == 'in':
+                x = "['{0}'~'{1}']".format(prefix[1],'|'.join(prefix[2]))
+                return [x]
+            if op == 'and' or op == 'or':
+                return _parts(prefix[1]) + _parts(prefix[2])
+        return _parts(expr)
+
+    @classmethod
+    def sql(cls,str):
+        return cls.parts(to_prefix(str))
+
     def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert'):
         self.hostname = hostname
         self._path = path
