@@ -101,6 +101,14 @@ class Garmin:
             '--read-config={0}/template.args'.format(self.tempdir)
         ])
 
+class Mwm:
+    def __init__(self,input_pbf,generate_mwm_path,tempdir=None):
+        self.input_pbf = input_pbf
+        self.generate_mwm_path = generate_mwm_path
 
-class Mbtiles:
-    pass
+    def run(self):
+        subprocess.check_call([
+            self.generate_mwm_path,
+            self.input_pbf
+        ])
+

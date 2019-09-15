@@ -40,9 +40,9 @@ h.apply_file(source.path(), locations=True, idx='sparse_file_array')
 for output in tabular_outputs:
 	output.finalize()
 
-
 nontabular.Osmand(source.path(),'tools/OsmAndMapCreator-main',tempdir=tempdir).run()
 nontabular.Garmin(source.path(),'tools/splitter-r583/splitter.jar','tools/mkgmap-r3890/mkgmap.jar',tempdir=tempdir).run()
+nontabular.Mwm(source.path(),'tools/generate_mwm.sh',tempdir=tempdir).run()
 print(shp.files)
 print(gpkg.files)
 print(kml.files)
