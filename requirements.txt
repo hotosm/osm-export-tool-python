@@ -3,3 +3,4 @@ pyparsing~=2.4.0
 pyyaml~=5.1.1
 shapely~=1.6.4
 requests~=2.22.0
+landez~=2.5.0

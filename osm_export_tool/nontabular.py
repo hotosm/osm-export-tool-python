@@ -3,6 +3,7 @@ from os.path import join
 import pathlib
 import subprocess
 from osm_export_tool import File
+import landez
 
 def osmand(input_pbf,map_creator_dir,tempdir=None,jvm_mem=[256,2048]):
     BATCH_XML = """<?xml version="1.0" encoding="utf-8"?>
@@ -97,3 +98,10 @@ def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_pa
         input_pbf
     ],env=env)
     return [File('mwm',[join(output_dir,base_name + '.mwm')],'')]
+
+def mbtiles(geom,filepath,tiles_url,min_zoom,max_zoom):
+    mb = landez.MBTilesBuilder(cache=False,tiles_url=tiles_url,tiles_headers={'User-Agent':'github.com/hotosm/osm-export-tool'},filepath=filepath)
+    mb.add_coverage(bbox=geom.bounds,
+                    zoomlevels=[min_zoom,max_zoom])
+    mb.run()
+    return [File('mbtiles',[filepath],'')]
