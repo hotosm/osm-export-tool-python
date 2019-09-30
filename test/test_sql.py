@@ -76,6 +76,16 @@ class TestMatcher(unittest.TestCase):
         self.assertFalse(m.matches({'building':'yes'}))
         self.assertTrue(m.matches({'building':'no'}))
 
+    def test_matcher_doublequote(self):
+        m = Matcher.from_sql("\"addr:housenumber\" = 1")
+        self.assertTrue(m.matches({'addr:housenumber':'1'}))
+
+        m = Matcher.from_sql("\"addr:housenumber\" IN ('foo')")
+        self.assertTrue(m.matches({'addr:housenumber':'foo'}))
+
+        m = Matcher.from_sql("\"addr:housenumber\" IS NOT NULL")
+        self.assertTrue(m.matches({'addr:housenumber':'foo'}))
+
     def test_matcher_or(self):
         m = Matcher.from_sql("building = 'yes' OR amenity = 'bank'")
         self.assertTrue(m.matches({'building':'yes'}))

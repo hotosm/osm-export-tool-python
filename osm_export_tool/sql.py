@@ -69,7 +69,7 @@ def strip_quotes(token):
         token = token[1:-1]
     if token[0] == "'" and token[-1] == "'":
         token = token[1:-1]
-    return token.replace(' ','\\ ')
+    return token
 
 def _match(d,tags):
     if len(d) == 0:
@@ -108,11 +108,11 @@ def to_prefix(sql):
         elif 'expression' in d:
             return prefixform(d['expression'])
         elif 'binop' in d:
-            return (d['binop'],d['columnName'],d['rval'][0])
+            return (d['binop'],strip_quotes(d['columnName']),d['rval'][0])
         elif 'notnull' in d:
-            return ('notnull',d['columnName'])
+            return ('notnull',strip_quotes(d['columnName']))
         elif 'in' in d:
-            return ('in',d['columnName'],d['rval'])
+            return ('in',strip_quotes(d['columnName']),d['rval'])
     return prefixform(whereExpression.parseString(sql,parseAll=True).asDict())
 
 class Matcher:
