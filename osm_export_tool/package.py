@@ -1,10 +1,14 @@
+import json
+import os
 import zipfile
+from shapely.geometry import mapping
 
-# a package is a ZIP containing a README, the boundary geoJSON and the data files.
+def create_package(destination,files,boundary_geom=None):
+    # the created zipfile must end with only .zip (not .shp.zip) for the HDX preview to work.
+    with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED, True) as z:
 
-def create_package(destination,files,mapping_for_readme=None,boundary_geom=None):
-	# the created zipfile must end with only .zip (not .shp.zip) for the HDX preview to work.
-	with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED, True) as z:
-		pass
-
-
+        if boundary_geom:
+            z.writestr("clipping_boundary.geojson", json.dumps(mapping(boundary_geom)))
+        for file in files:
+            for part in file.parts:
+                z.write(part, os.path.basename(part))

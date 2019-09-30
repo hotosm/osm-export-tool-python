@@ -4,6 +4,7 @@ import osm_export_tool.nontabular as nontabular
 from osm_export_tool.mapping import Mapping
 from osm_export_tool.geometry import load_geometry
 from osm_export_tool.sources import Overpass, File
+from osm_export_tool.package import create_package
 from os.path import join
 
 GEOJSON = """{
@@ -51,3 +52,5 @@ print(mbtiles_files)
 print(osmand_files)
 print(garmin_files)
 print(mwm_files)
+
+create_package(join(tempdir,'shp.zip'),shp.files,boundary_geom=geom)
