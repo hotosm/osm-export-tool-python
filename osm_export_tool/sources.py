@@ -94,7 +94,7 @@ class Overpass:
             relations = '\n'.join(['relation({0}){1};'.format(geom,f) for f in relations])
             query = query.format(nodes,ways,relations)
         else:
-            query = Template('(node({0});<;>>;>;)').format(geom)
+            query = '(node({0});<;>>;>;)'.format(geom)
 
         data = base_template.substitute(maxsize=21474848,timeout=1600,query=query)
 
