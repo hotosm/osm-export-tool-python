@@ -2,6 +2,7 @@ import json
 import os
 import zipfile
 from shapely.geometry import mapping
+from osm_export_tool import File
 
 def create_package(destination,files,boundary_geom=None):
     # the created zipfile must end with only .zip (not .shp.zip) for the HDX preview to work.
@@ -12,3 +13,5 @@ def create_package(destination,files,boundary_geom=None):
         for file in files:
             for part in file.parts:
                 z.write(part, os.path.basename(part))
+
+    return File('zip',[destination],'')

@@ -89,7 +89,7 @@ def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
     ])
     return [File('garmin',[join(tempdir,'gmapsupp.img')],'')]
 
-def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_path):
+def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_path='osmconvert'):
     base_name = (os.path.basename(input_pbf).split(os.extsep))[0]
     env = os.environ.copy()
     env.update(OSMCONVERT=osmconvert_path,TARGET=output_dir,GENERATOR_TOOL=generator_tool_path)
