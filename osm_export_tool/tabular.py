@@ -56,23 +56,23 @@ class Kml:
             # if the theme has only one geom type, don't add a suffix to the layer name.
             if t.points and not t.lines and not t.polygons:
                 self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,name,ogr.wkbPoint,t)
-                self.files.append(File('kml',[name + '.kml'],t.name))
+                self.files.append(File('kml',[name + '.kml'],{'theme':t.name}))
             elif not t.points and t.lines and not t.polygons:
                 self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,name,ogr.wkbLineString,t)
-                self.files.append(File('kml',[name + '.kml'],t.name))
+                self.files.append(File('kml',[name + '.kml'],{'theme':t.name}))
             elif not t.points and not t.lines and t.polygons:
                 self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,name,ogr.wkbMultiPolygon,t)
                 self.files.append(File('kml',[name + '.kml'],t.name))
             else:
                 if t.points:
                     self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,name + '_points',ogr.wkbPoint,t)
-                    self.files.append(File('kml',[name + '_points.kml'],t.name))
+                    self.files.append(File('kml',[name + '_points.kml'],{'theme':t.name}))
                 if t.lines:
                     self.layers[(t.name,GeomType.LINE)] = Kml.Layer(driver,name + '_lines',ogr.wkbLineString,t)
-                    self.files.append(File('kml',[name + '_lines.kml'],t.name))
+                    self.files.append(File('kml',[name + '_lines.kml'],{'theme':t.name}))
                 if t.polygons:
                     self.layers[(t.name,GeomType.POLYGON)] = Kml.Layer(driver,name + '_polygons',ogr.wkbMultiPolygon,t)
-                    self.files.append(File('kml',[name + '_polygons.kml'],t.name))
+                    self.files.append(File('kml',[name + '_polygons.kml'],{'theme':t.name}))
 
     def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
@@ -135,13 +135,13 @@ class Shapefile:
             else:
                 if t.points:
                     self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,name + '_points',ogr.wkbPoint,t)
-                    self.files.append(File.shp(name + '_points',t.name))
+                    self.files.append(File.shp(name + '_points',{'theme':t.name}))
                 if t.lines:
                     self.layers[(t.name,GeomType.LINE)] = Shapefile.Layer(driver,name + '_lines',ogr.wkbLineString,t)
-                    self.files.append(File.shp(name + '_lines',t.name))
+                    self.files.append(File.shp(name + '_lines',{'theme':t.name}))
                 if t.polygons:
                     self.layers[(t.name,GeomType.POLYGON)] = Shapefile.Layer(driver,name + '_polygons',ogr.wkbMultiPolygon,t)
-                    self.files.append(File.shp(name + '_polygons',t.name))
+                    self.files.append(File.shp(name + '_polygons',{'theme':t.name}))
 
     def write(self,osm_id,layer_name,geom_type,geom,tags):
         layer = self.layers[(layer_name,geom_type)]
@@ -182,7 +182,7 @@ class Geopackage:
         self.ds = driver.CreateDataSource(output_name + '.gpkg')
         self.ds.StartTransaction()
 
-        self.files = [File('gpkg',[output_name + '.gpkg'],'')]
+        self.files = [File('gpkg',[output_name + '.gpkg'])]
         self.layers = {}
         for theme in mapping.themes:
             layer = Geopackage.Layer(self.ds,theme)
@@ -238,7 +238,7 @@ class MultiGeopackage:
         self.layers = {}
         for theme in mapping.themes:
             layer = MultiGeopackage.Layer(output_name, theme)
-            self.files.append(File('gpkg',[output_name + '_' + theme.name + '.gpkg'],theme.name))
+            self.files.append(File('gpkg',[output_name + '_' + theme.name + '.gpkg'],{'theme':theme.name}))
             if theme.points:
                 self.layers[(theme.name,GeomType.POINT)] = layer
             if theme.lines:

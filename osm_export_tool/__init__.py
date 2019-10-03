@@ -18,19 +18,19 @@ def GetHumanReadable(size,precision=2):
 
 # can be more than one file (example: Shapefile w/ sidecars)
 class File:
-    def __init__(self,output_name,parts,theme):
+    def __init__(self,output_name,parts,extra = {}):
         self.output_name = output_name
         self.parts = parts
-        self.theme = theme
+        self.extra = extra
 
     @classmethod
-    def shp(cls,name,theme):
+    def shp(cls,name,extra = {}):
         parts = [name + '.shp']
         parts.append(name + '.shx')
         parts.append(name + '.prj')
         parts.append(name + '.cpg')
         parts.append(name + '.dbf')
-        return cls('shp',parts,theme)
+        return cls('shp',parts,extra)
 
     def size(self):
         total = 0
@@ -39,7 +39,7 @@ class File:
         return total
 
     def __str__(self):
-        return '{0} {1} {2} {3}'.format(self.output_name,self.theme,','.join(self.parts),GetHumanReadable(self.size()))
+        return '{0} {1} {2} {3}'.format(self.output_name,self.extra,','.join(self.parts),GetHumanReadable(self.size()))
 
     def __repr__(self):
         return self.__str__()

@@ -7,7 +7,7 @@ from osm_export_tool.sql import to_prefix
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
 
-class File:
+class Pbf:
     def __init__(self,path):
         self._path = path
 

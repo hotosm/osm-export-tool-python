@@ -3,8 +3,8 @@ import osm_export_tool.tabular as tabular
 import osm_export_tool.nontabular as nontabular
 from osm_export_tool.mapping import Mapping
 from osm_export_tool.geometry import load_geometry
-from osm_export_tool.sources import Overpass, File
-from osm_export_tool.package import create_package
+from osm_export_tool.sources import Overpass, Pbf
+from osm_export_tool.package import create_package, create_posm_bundle
 from os.path import join
 
 GEOJSON = """{
@@ -41,16 +41,18 @@ h.apply_file(source.path(), locations=True, idx='sparse_file_array')
 for output in tabular_outputs:
 	output.finalize()
 
-osmand_files = nontabular.osmand(source.path(),'/usr/local/OsmAndMapCreator',tempdir=tempdir)
-garmin_files = nontabular.garmin(source.path(),'/usr/local/splitter/splitter.jar','/usr/local/mkgmap/mkgmap.jar',tempdir=tempdir)
-mwm_files = nontabular.mwm(source.path(),join(tempdir,'mwm'),'generate_mwm.sh','/usr/local/bin/generator_tool','/usr/bin/osmconvert')
-mbtiles_files = nontabular.mbtiles(geom,join(tempdir,'output.mbtiles'),'http://tile.openstreetmap.org/{z}/{x}/{y}.png',14,14)
-print(shp.files)
-print(gpkg.files)
-print(kml.files)
-print(mbtiles_files)
-print(osmand_files)
-print(garmin_files)
-print(mwm_files)
+osmand_files = nontabular.osmand(source.path(),'tools/OsmAndMapCreator-main',tempdir=tempdir)
+garmin_files = nontabular.garmin(source.path(),'tools/splitter-r583/splitter.jar','tools/mkgmap-r3890/mkgmap.jar',tempdir=tempdir)
+#mwm_files = nontabular.mwm(source.path(),join(tempdir,'mwm'),'generate_mwm.sh','/usr/local/bin/generator_tool','/usr/bin/osmconvert')
+#mbtiles_files = nontabular.mbtiles(geom,join(tempdir,'output.mbtiles'),'http://tile.openstreetmap.org/{z}/{x}/{y}.png',14,14)
 
+files = []
+files += shp.files
+files += gpkg.files
+files += kml.files
+files += osmand_files
+files += garmin_files
+#files += mbtiles_files
+files.append(osm_export_tool.File('osm_pbf',[source.path()],''))
 create_package(join(tempdir,'shp.zip'),shp.files,boundary_geom=geom)
+create_posm_bundle(join(tempdir,'bundle.tgz'),files,"Title","name","description",geom)

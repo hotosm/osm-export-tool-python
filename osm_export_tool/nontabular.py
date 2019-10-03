@@ -44,7 +44,7 @@ def osmand(input_pbf,map_creator_dir,tempdir=None,jvm_mem=[256,2048]):
         'net.osmand.util.IndexBatchCreator',
         join(tempdir,'batch.xml')
     ])
-    return [File('osmand_obf',[join(tempdir,'Osmand_2.obf')],'')]
+    return [File('osmand_obf',[join(tempdir,'Osmand_2.obf')])]
 
 def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
     """
@@ -87,7 +87,7 @@ def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
         '--draw-priority=100',
         '--read-config={0}/template.args'.format(tempdir)
     ])
-    return [File('garmin',[join(tempdir,'gmapsupp.img')],'')]
+    return [File('garmin',[join(tempdir,'gmapsupp.img')])]
 
 def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_path='osmconvert'):
     base_name = (os.path.basename(input_pbf).split(os.extsep))[0]
@@ -97,11 +97,11 @@ def mwm(input_pbf,output_dir,generate_mwm_path,generator_tool_path,osmconvert_pa
         generate_mwm_path,
         input_pbf
     ],env=env)
-    return [File('mwm',[join(output_dir,base_name + '.mwm')],'')]
+    return [File('mwm',[join(output_dir,base_name + '.mwm')])]
 
-def mbtiles(geom,filepath,tiles_url,min_zoom,max_zoom):
+def mbtiles(geom,filepath,tiles_url,minzoom,maxzoom):
     mb = landez.MBTilesBuilder(cache=False,tiles_url=tiles_url,tiles_headers={'User-Agent':'github.com/hotosm/osm-export-tool'},filepath=filepath)
     mb.add_coverage(bbox=geom.bounds,
-                    zoomlevels=[min_zoom,max_zoom])
+                    zoomlevels=[minzoom,maxzoom])
     mb.run()
-    return [File('mbtiles',[filepath],'')]
+    return [File('mbtiles',[filepath],{'minzoom':minzoom,'maxzoom':maxzoom,'source':tiles_url})]
