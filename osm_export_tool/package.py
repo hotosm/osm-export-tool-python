@@ -17,7 +17,7 @@ def create_package(destination,files,boundary_geom=None):
             for part in file.parts:
                 z.write(part, os.path.basename(part))
 
-    return File('zip',[destination],'')
+    return File('zip',[destination])
 
 def create_posm_bundle(destination,files,title,name,description,geom):
     contents = {}
@@ -65,3 +65,5 @@ def create_posm_bundle(destination,files,title,name,description,geom):
         tarinfo = tarfile.TarInfo('manifest.json')
         tarinfo.size = len(data)
         bundle.addfile(tarinfo, io.BytesIO(data))
+
+    return File('bundle',[destination])
