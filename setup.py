@@ -24,7 +24,7 @@ requirements.append(['gdal~=' + gdal_version])
 
 setuptools.setup(
     name="osm-export-tool",
-    version="0.0.7",
+    version="0.0.8",
     author="Brandon Liu",
     author_email="brandon.liu@hotosm.org",
     description="Convert OpenStreetMap data into GIS and mobile mapping file formats.",
