@@ -122,3 +122,25 @@ class TestMatcher(unittest.TestCase):
     def test_null(self):
         m = Matcher.null()
         self.assertFalse(m.matches({'building':'one'}))
+
+    def test_to_sql(self):
+        sql = "building = 'yes'"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building IS NOT NULL"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building IN ('one','two')"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building != 'yes'"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building >= 0"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building <= 0"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building > 0"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building < 0"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building > 0 AND building < 5"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)
+        sql = "building > 0 OR building < 5"
+        self.assertEqual(Matcher.from_sql(sql).to_sql(),sql)

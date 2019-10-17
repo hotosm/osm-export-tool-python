@@ -141,3 +141,29 @@ class Matcher:
     @classmethod
     def from_sql(cls,sql):
         return cls(to_prefix(sql))
+
+    # only used for display and debugging
+    def to_sql(self):
+        def expr_to_sql(e):
+            if e[0] == '=':
+                return "{0} = '{1}'".format(e[1],e[2])
+            if e[0] == 'notnull':
+                return "{0} IS NOT NULL".format(e[1])
+            if e[0] == '!=':
+                return "{0} != '{1}'".format(e[1],e[2])
+            if e[0] == '>=':
+                return "{0} >= {1}".format(e[1],e[2])
+            if e[0] == '<=':
+                return "{0} <= {1}".format(e[1],e[2])
+            if e[0] == '>':
+                return "{0} > {1}".format(e[1],e[2])
+            if e[0] == '<':
+                return "{0} < {1}".format(e[1],e[2])
+            if e[0] == 'in':
+                parts = ','.join(["'" + x + "'" for x in e[2]])
+                return '{0} IN ({1})'.format(e[1],parts)
+            if e[0] == 'and':
+                return expr_to_sql(e[1]) + ' AND ' + expr_to_sql(e[2])
+            if e[0] == 'or':
+                return expr_to_sql(e[1]) + ' OR ' + expr_to_sql(e[2])
+        return expr_to_sql(self.expr)

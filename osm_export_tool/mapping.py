@@ -59,6 +59,15 @@ class Theme:
 			for key in self.keys:
 				self.matcher = self.matcher.union(Matcher.any(key))
 
+		extra = d.copy()
+		if 'where' in extra:
+			del extra['where']
+		if 'select' in d:
+			del extra['select']
+		if 'types' in d:
+			del extra['types']
+		self.extra = extra
+
 	def matches(self,geom_type,tags):
 		if geom_type == GeomType.POINT and not self.points:
 			return False

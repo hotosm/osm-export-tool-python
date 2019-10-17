@@ -173,6 +173,17 @@ class TestMapping(unittest.TestCase):
         m = Mapping(y)
         self.assertTrue(len(m.themes[0].keys) == 1)
 
+    def test_extra(self):
+        y = '''
+        buildings:
+          foo:
+            bar: baz
+          select:
+            - building
+        '''
+        m = Mapping(y)
+        self.assertEqual(m.themes[0].extra,{'foo':{'bar':'baz'}})
+
 class TestMappingValidation(unittest.TestCase):
     def test_empty_yaml(self):
         y = '''
