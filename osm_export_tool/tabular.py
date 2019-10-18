@@ -86,7 +86,8 @@ class Kml:
         layer.ogr_layer.CreateFeature(feature)
 
     def finalize(self):
-        pass
+        self.layers = None
+        self.ds = None
 
 class Shapefile:
     class Layer:
@@ -155,7 +156,8 @@ class Shapefile:
         layer.ogr_layer.CreateFeature(feature)
 
     def finalize(self):
-        pass
+        self.layers = None
+        self.ds = None
 
 class Geopackage:
     class Layer:
