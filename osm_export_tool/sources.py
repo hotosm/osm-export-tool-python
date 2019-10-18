@@ -96,16 +96,18 @@ class Overpass:
         else:
             query = '(node({0});<;>>;>;)'.format(geom)
 
-        data = base_template.substitute(maxsize=21474848,timeout=1600,query=query)
+        data = base_template.substitute(maxsize=2147483648,timeout=1600,query=query)
 
         with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
             with open(self.tmp_path, 'wb') as f:
                 shutil.copyfileobj(r.raw, f)
 
         with open(self.tmp_path,'r') as f:
-            sample = [next(f) for x in range(2)]
+            sample = [next(f) for x in range(6)]
             if 'DOCTYPE html' in sample[1]:
                 raise Exception('Overpass failure')
+            if 'remark' in sample[5]:
+                raise Exception(sample[5])
 
         # run osmconvert on the file
         subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
