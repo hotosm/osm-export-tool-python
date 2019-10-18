@@ -1,6 +1,6 @@
 # OSM Export Tool
 
-> This project is under development. The current [Export Tool web service](https://export.hotosm.org) repository is at [hotosm/osm-export-tool](https://github.com/hotosm/osm-export-tool/tree/master/ops).
+This project is in a usable state on Linux and Mac. The current [Export Tool web service](https://export.hotosm.org) repository is at [hotosm/osm-export-tool](https://github.com/hotosm/osm-export-tool/tree/master/ops).
 
 ## Motivation
 
