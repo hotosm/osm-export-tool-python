@@ -3,7 +3,7 @@ import osm_export_tool.tabular as tabular
 import osm_export_tool.nontabular as nontabular
 from osm_export_tool.mapping import Mapping
 from osm_export_tool.geometry import load_geometry
-from osm_export_tool.sources import Overpass, Pbf
+from osm_export_tool.sources import Overpass, Pbf, OsmExpress
 from osm_export_tool.package import create_package, create_posm_bundle
 from os.path import join
 

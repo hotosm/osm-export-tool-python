@@ -1,9 +1,11 @@
+import json
 import os
 import shutil
 import subprocess
 import requests
 from string import Template
 from osm_export_tool.sql import to_prefix
+import shapely.geometry
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
 
@@ -11,11 +13,36 @@ class Pbf:
     def __init__(self,path):
         self._path = path
 
+    def fetch(self):
+        pass
+
     def path(self):
         return self._path
 
-class Overpass:
+class OsmExpress:
+    def __init__(self,osmx_path,db_path,geom,output_path,use_existing=True,tempdir=None):
+        self.osmx_path = osmx_path
+        self.db_path = db_path
+        self.geom = geom
+        self.output_path = output_path
+        self.use_existing = use_existing
+        self.tempdir = tempdir
 
+    def fetch(self):
+        region_json = os.path.join(self.tempdir,'region.json')
+        with open(region_json,'w') as f:
+            f.write(json.dumps(shapely.geometry.mapping(self.geom)))
+        subprocess.check_call([self.osmx_path,'extract',self.db_path,self.output_path,'--region',region_json])
+        os.remove(region_json)
+
+    def path(self):
+        if os.path.isfile(self.output_path) and self.use_existing:
+            return self.output_path
+        else:
+            self.fetch()
+        return self.output_path
+
+class Overpass:
     @classmethod
     def filters(cls,mapping):
         nodes = set()
@@ -120,6 +147,4 @@ class Overpass:
             self.fetch()
         return self._path
 
-class OsmiumSource:
-    pass
 
