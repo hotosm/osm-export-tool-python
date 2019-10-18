@@ -27,7 +27,8 @@ with open('../osm_export_tool/mappings/default.yml','r') as f:
 	mapping_txt = f.read()
 mapping = Mapping(mapping_txt)
 
-source = Overpass('http://overpass.hotosm.org',geom,join(tempdir,'overpass.osm.pbf'),tempdir=tempdir,mapping=mapping,use_existing=False)
+#source = Overpass('http://overpass.hotosm.org',geom,join(tempdir,'extract.osm.pbf'),tempdir=tempdir,mapping=mapping,use_existing=False)
+source = OsmExpress('osmx','hawaii.osmx',geom,join(tempdir,'extract.osm.pbf'),tempdir=tempdir,use_existing=False)
 
 shp = tabular.Shapefile("tmp/example",mapping)
 gpkg = tabular.Geopackage("tmp/example",mapping)
