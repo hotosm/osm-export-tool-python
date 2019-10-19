@@ -24,6 +24,9 @@ def closed_way_is_polygon(tags):
             return True
     return False
 
+def make_filename(s):
+    return s.lower().replace(' ','_')
+
 class Kml:
     class Layer:
         def __init__(self,driver,file_name,ogr_geom_type,theme):
@@ -52,7 +55,7 @@ class Kml:
         self.files = []
         self.layers = {}
         for t in mapping.themes:
-            name = output_name + '_' + t.name
+            name = output_name + '_' + make_filename(t.name)
             if t.points:
                 self.layers[(t.name,GeomType.POINT)] = Kml.Layer(driver,name + '_points',ogr.wkbPoint,t)
                 self.files.append(File('kml',[name + '_points.kml'],{'theme':t.name}))
@@ -112,7 +115,7 @@ class Shapefile:
         self.files = []
         self.layers = {}
         for t in mapping.themes:
-            name = output_name + '_' + t.name
+            name = output_name + '_' + make_filename(t.name)
             if t.points:
                 self.layers[(t.name,GeomType.POINT)] = Shapefile.Layer(driver,name + '_points',ogr.wkbPoint,t)
                 self.files.append(File.shp(name + '_points',{'theme':t.name}))
@@ -195,7 +198,7 @@ class MultiGeopackage:
     class Layer:
         def __init__(self,output_name,theme):
             driver = ogr.GetDriverByName('GPKG')
-            self.ds = driver.CreateDataSource(output_name + '_' + theme.name + '.gpkg')
+            self.ds = driver.CreateDataSource(output_name + '_' + make_filename(theme.name) + '.gpkg')
             self.ds.StartTransaction()
             self.ogr_layer = self.ds.CreateLayer(theme.name, epsg_4326, ogr.wkbUnknown,options=['SPATIAL_INDEX=NO'])
 
@@ -219,7 +222,7 @@ class MultiGeopackage:
         self.layers = {}
         for theme in mapping.themes:
             layer = MultiGeopackage.Layer(output_name, theme)
-            self.files.append(File('gpkg',[output_name + '_' + theme.name + '.gpkg'],{'theme':theme.name}))
+            self.files.append(File('gpkg',[output_name + '_' + make_filename(theme.name) + '.gpkg'],{'theme':theme.name}))
             if theme.points:
                 self.layers[(theme.name,GeomType.POINT)] = layer
             if theme.lines:
