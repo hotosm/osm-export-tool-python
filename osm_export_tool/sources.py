@@ -42,6 +42,29 @@ class OsmExpress:
             self.fetch()
         return self.output_path
 
+class OsmiumTool:
+    def __init__(self,osmium_path,source_path,geom,output_path,use_existing=True,tempdir=None):
+        self.osmium_path = osmium_path
+        self.source_path = source_path
+        self.geom = geom
+        self.output_path = output_path
+        self.use_existing = use_existing
+        self.tempdir = tempdir
+
+    def fetch(self):
+        region_json = os.path.join(self.tempdir,'region.json')
+        with open(region_json,'w') as f:
+            f.write(json.dumps({'type':'Feature','geometry':shapely.geometry.mapping(self.geom)}))
+        subprocess.check_call([self.osmium_path,'extract','-p',region_json,self.source_path,'-o',self.output_path,'--overwrite'])
+        os.remove(region_json)
+
+    def path(self):
+        if os.path.isfile(self.output_path) and self.use_existing:
+            return self.output_path
+        else:
+            self.fetch()
+        return self.output_path
+
 class Overpass:
     @classmethod
     def filters(cls,mapping):
