@@ -1,5 +1,7 @@
 import os
 from enum import Enum
+# force loading of shapely before ogr, see https://github.com/Toblerity/Shapely/issues/490
+from shapely.geometry import shape, MultiPolygon, Polygon
 
 name = 'osm_export_tool'
 
