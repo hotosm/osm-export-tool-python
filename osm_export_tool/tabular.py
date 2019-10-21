@@ -5,6 +5,7 @@ import re
 import osmium as o
 import ogr
 from shapely.wkb import loads, dumps
+from shapely.prepared import prep
 
 from osm_export_tool import GeomType, File
 
@@ -252,6 +253,8 @@ class Handler(o.SimpleHandler):
         self.outputs = outputs
         self.mapping = mapping
         self.clipping_geom = clipping_geom
+        if clipping_geom:
+            self.prepared_clipping_geom = prep(clipping_geom)
 
     def node(self,n):
         if len(n.tags) == 0:
@@ -263,7 +266,7 @@ class Handler(o.SimpleHandler):
                     wkb = fab.create_point(n)
                     if self.clipping_geom:
                         sg = loads(bytes.fromhex(wkb))
-                        if not self.clipping_geom.intersects(sg):
+                        if not self.prepared_clipping_geom.contains(sg):
                             return
                     geom = create_geom(wkb)
                 for output in self.outputs:
@@ -286,9 +289,10 @@ class Handler(o.SimpleHandler):
                         wkb = fab.create_linestring(w)
                         if self.clipping_geom:
                             sg = loads(bytes.fromhex(wkb))
-                            sg = self.clipping_geom.intersection(sg)
-                            if sg.is_empty:
+                            if not self.prepared_clipping_geom.intersects(sg):
                                 return
+                            if not self.prepared_clipping_geom.contains_properly(sg):
+                                sg = self.clipping_geom.intersection(sg)
                             linestring = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
                             linestring = create_geom(wkb)
@@ -311,9 +315,10 @@ class Handler(o.SimpleHandler):
                         wkb = fab.create_multipolygon(a)
                         if self.clipping_geom:
                             sg = loads(bytes.fromhex(wkb))
-                            sg = self.clipping_geom.intersection(sg)
-                            if sg.is_empty:
+                            if not self.prepared_clipping_geom.intersects(sg):
                                 return
+                            if not self.prepared_clipping_geom.contains_properly(sg):
+                                sg = self.clipping_geom.intersection(sg)
                             multipolygon = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
                             multipolygon = create_geom(wkb)
