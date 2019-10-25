@@ -211,7 +211,7 @@ reservoirs:
 water_gates:
   types:
     - points
-    - polygon
+    - polygons
   select:
     - waterway
     - name
@@ -627,7 +627,7 @@ fire_stations:
 
 sport_facilities:
   types:
-    - point
+    - points
     - polygons
   select:
     - leisure
