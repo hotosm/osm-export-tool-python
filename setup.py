@@ -14,14 +14,6 @@ requirements = [
     'landez~=2.5.0'
 ]
 
-if 'GDAL_VERSION' in os.environ:
-    gdal_version = os.environ['GDAL_VERSION']
-else:
-    gdal_config = os.environ.get('GDAL_CONFIG', 'gdal-config')
-    gdal_version = subprocess.check_output([gdal_config,'--version'],encoding='UTF-8').strip()
-
-requirements.append(['gdal~=' + gdal_version])
-
 setuptools.setup(
     name="osm-export-tool",
     version="0.0.17",

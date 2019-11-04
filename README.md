@@ -26,6 +26,8 @@ It can also create files in non-tabular formats such as those for Garmin GPS dev
 
 PyOsmium is used to read OSM files and GDAL/OGR is used to write GIS files, so this program should be reasonably fast and light on memory. There is a built-in OSM reader available for GDAL/OGR, but this program is much more flexible.
 
+This library will not automatically install GDAL because it needs to match the version on your system. You will need to separately run `pip install GDAL==2.3.2` (change 2.3.2 to match `gdalinfo --version`)
+
 ## Example usage
 
 ```
