@@ -177,7 +177,7 @@ Populated Places:
 
 Financial Services:
     hdx:
-      tags: financial institutions, services
+      tags: financial institutions, services, geodata
       caveats: “OpenStreetMap data is crowd sourced and cannot be considered to be exhaustive”
     types:
       - points
@@ -195,7 +195,7 @@ Financial Services:
 
 Railways:
   hdx:
-    tags: facilities and infrastructure,railways,transportation
+    tags: facilities and infrastructure,railways,transportation, geodata
     caveats: "OpenStreetMap data is crowd sourced and cannot be considered to be exhaustive"
   types:
     - lines
