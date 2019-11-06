@@ -100,7 +100,7 @@ Airports:
     - addr:full
     - addr:city
     - source
-  where: aeroway IS NOT NULL OR building = 'aerodrome' OR emergency:helipad IS NOT NULL OR emergency = ’landing_site’
+  where: aeroway IS NOT NULL OR building = 'aerodrome' OR emergency:helipad IS NOT NULL OR emergency = 'landing_site'
 
 
 Sea Ports:
@@ -190,7 +190,7 @@ Financial Services:
       - addr:full
       - addr:city
       - source
-    where: amenity IN (‘mobile_money_agent’,’bureau_de_change’,’bank’,’microfinance’,’atm’,’sacco’,’money_transfer’,’post_office’)
+    where: amenity IN ('mobile_money_agent','bureau_de_change','bank','microfinance','atm','sacco','money_transfer','post_office')
 
 
 Railways:
