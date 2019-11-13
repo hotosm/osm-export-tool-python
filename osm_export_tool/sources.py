@@ -105,7 +105,7 @@ class Overpass:
     def sql(cls,str):
         return cls.parts(to_prefix(str))
 
-    def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert',mapping=None):
+    def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert',mapping=None,use_curl=False):
         self.hostname = hostname
         self._path = path
         self.geom = geom
@@ -113,6 +113,8 @@ class Overpass:
         self.osmconvert_path = osmconvert_path
         self.tmp_path = os.path.join(tempdir,'tmp.osm.xml')
         self.mapping = mapping
+        self.use_curl = use_curl
+        self.tempdir = tempdir
 
     def fetch(self):
         base_template = Template('[maxsize:$maxsize][timeout:$timeout];$query;out meta;')
@@ -148,9 +150,15 @@ class Overpass:
 
         data = base_template.substitute(maxsize=2147483648,timeout=1600,query=query)
 
-        with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
-            with open(self.tmp_path, 'wb') as f:
-                shutil.copyfileobj(r.raw, f)
+        if self.use_curl:
+            with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
+                query_txt.write(data)
+            print(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
+            subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
+        else:
+            with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
+                with open(self.tmp_path, 'wb') as f:
+                    shutil.copyfileobj(r.raw, f)
 
         with open(self.tmp_path,'r') as f:
             sample = [next(f) for x in range(6)]
