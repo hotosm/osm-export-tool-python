@@ -199,6 +199,7 @@ Railways:
     caveats: "OpenStreetMap data is crowd sourced and cannot be considered to be exhaustive"
   types:
     - lines
+    - points
     - polygons
   select:
     - name
@@ -209,4 +210,4 @@ Railways:
     - addr:full
     - addr:city
     - source
-  where: railway IN ('rail','station')
+  where: railway IN ('rail','subway','station')
