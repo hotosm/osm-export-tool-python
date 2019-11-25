@@ -92,6 +92,8 @@ class Overpass:
             op = prefix[0]
             if op == '=':
                 return ["['{0}'='{1}']".format(prefix[1],prefix[2])]
+            if op == '!=':
+                return ["['{0}'!='{1}']".format(prefix[1],prefix[2])]
             if op in ['<','>','<=','>='] or op == 'notnull':
                 return ["['{0}']".format(prefix[1])]
             if op == 'in':
