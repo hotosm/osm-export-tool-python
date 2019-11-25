@@ -43,17 +43,17 @@ class Theme:
 			self.keys.remove('osm_id')
 
 		if 'where' in d:
-			if not d['where']:
-				raise InvalidMapping('where: for theme {0} is invalid'.format(name))
-			if isinstance(d['where'],list):
-				self.matcher = Matcher.null()
-				for w in d['where']:
-					self.matcher = self.matcher.union(Matcher.from_sql(w))
-			else:
-				try:
+			try:
+				if not d['where']:
+					raise InvalidMapping('where: for theme {0} is invalid'.format(name))
+				if isinstance(d['where'],list):
+					self.matcher = Matcher.null()
+					for w in d['where']:
+						self.matcher = self.matcher.union(Matcher.from_sql(w))
+				else:
 					self.matcher = Matcher.from_sql(d['where'])
-				except pyparsing.ParseException:
-					raise InvalidMapping('Invalid SQL: {0}'.format(d['where']))
+			except pyparsing.ParseException:
+				raise InvalidMapping('Invalid SQL: {0}'.format(d['where']))
 		else:
 			self.matcher = Matcher.null()
 			for key in self.keys:
