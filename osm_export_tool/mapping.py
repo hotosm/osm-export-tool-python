@@ -15,6 +15,11 @@ class Theme:
 		self.lines = False
 		self.polygons = False
 
+		if not isinstance(d,dict):
+			if isinstance(d,list):
+				raise InvalidMapping('theme {0} must be YAML dict (types: , select:) , not list (- types, - select)'.format(name))
+			raise InvalidMapping('Theme value must be dict')
+
 		if 'types' not in d:
 			self.points = True
 			self.lines = True
@@ -30,8 +35,6 @@ class Theme:
 			if 'polygons' in d['types']:
 				self.polygons = True
 
-		if isinstance(d,list):
-			raise InvalidMapping('theme {0} must be YAML dict (types: , select:) , not list (- types, - select)'.format(name))
 
 		if 'select' not in d:
 			raise InvalidMapping('missing select: for theme {0}'.format(name))
