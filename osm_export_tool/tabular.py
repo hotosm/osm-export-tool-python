@@ -3,7 +3,8 @@ import os
 import re
 
 import osmium as o
-import ogr
+import osgeo.ogr as ogr
+import osgeo.osr as osr
 from shapely.wkb import loads, dumps
 from shapely.prepared import prep
 
@@ -11,7 +12,7 @@ from osm_export_tool import GeomType, File
 
 fab = o.geom.WKBFactory()
 create_geom = lambda b : ogr.CreateGeometryFromWkb(bytes.fromhex(b))
-epsg_4326 = ogr.osr.SpatialReference()
+epsg_4326 = osr.SpatialReference()
 epsg_4326.ImportFromEPSG(4326)
 
 CLOSED_WAY_KEYS = ['aeroway','amenity','boundary','building','building:part','craft','geological','historic','landuse','leisure','military','natural','office','place','shop','sport','tourism']
