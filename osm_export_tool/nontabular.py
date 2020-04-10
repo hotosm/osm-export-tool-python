@@ -85,6 +85,7 @@ def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
         '--route',
         '--generate-sea=extend-sea-sectors',
         '--draw-priority=100',
+        '--unicode',
         '--read-config={0}/template.args'.format(tempdir)
     ])
     return [File('garmin',[join(tempdir,'gmapsupp.img')])]
