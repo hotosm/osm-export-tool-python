@@ -28,6 +28,22 @@ PyOsmium is used to read OSM files and GDAL/OGR is used to write GIS files, so t
 
 This library will not automatically install GDAL because it needs to match the version on your system. You will need to separately run `pip install GDAL==2.3.2` (change 2.3.2 to match `gdalinfo --version`)
 
+## Running with Docker
+
+If you want to avoid installing the right version of GDAL on your system you can run the program as a docker container instead.
+
+To build the docker image, use the following command.
+
+```
+docker build -t osm-export-tool .
+```
+
+To run the tool as a container, using your current directory as working directory, use the following command.
+
+```
+docker run -it --rm -v $(pwd):/work osm-export-tool INPUT_FILE.pbf OUTPUT_NAME
+```
+
 ## Example usage
 
 ```
