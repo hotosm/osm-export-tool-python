@@ -43,13 +43,78 @@ class OsmExpress:
         return self.output_path
 
 class OsmiumTool:
-    def __init__(self,osmium_path,source_path,geom,output_path,use_existing=True,tempdir=None):
+    def __init__(self,osmium_path,source_path,geom,output_path,use_existing=True,tempdir=None, mapping=None):
         self.osmium_path = osmium_path
         self.source_path = source_path
         self.geom = geom
         self.output_path = output_path
         self.use_existing = use_existing
         self.tempdir = tempdir
+        self.mapping = mapping
+
+    @classmethod
+    def parts(cls, expr):
+        def _parts(prefix):
+            op = prefix[0]
+            if op == '=':
+                return ["{0}={1}".format(prefix[1],prefix[2])]
+            if op == '!=':
+                return ["{0}!={1}".format(prefix[1],prefix[2])]
+            if op in ['<','>','<=','>='] or op == 'notnull':
+                raise ValueError('{0} where clause not supported'.format(op))
+            if op == 'in':
+                x = "{0}={1}".format(prefix[1],','.join(prefix[2]))
+                return [x]
+            if op == 'and' or op == 'or':
+                return _parts(prefix[1]) + _parts(prefix[2])
+        return _parts(expr)
+
+    @staticmethod
+    def get_element_filter(theme, part):
+        if theme.points:
+            element = "n/{0}" # node
+        if theme.lines:
+            element = "w/{0}" # way
+        if theme.polygons:
+            element = "r/{0}" # relation
+
+        return element.format(part)
+
+    @classmethod
+    def filters(cls,mapping):
+        filters_set = set()
+        tags = set()
+        for t in mapping.themes:
+            prefix = t.matcher.expr
+            parts = cls.parts(prefix)
+            for part in parts:
+                filters_set.add(OsmiumTool.get_element_filter(t, part))
+                key = [t for t in t.keys if t in part]
+                if len(key) == 1:
+                    tags.add(key[0])
+
+            # Add missing fields not included within where clause.
+            for k in t.keys:
+                if k in tags:
+                    continue
+                filters_set.add(OsmiumTool.get_element_filter(t, k))
+
+        return filters_set
+
+    def tags_filter(self, filters, planet_as_source):
+        source_path = self.output_path
+        if planet_as_source is True:
+            source_path = self.source_path
+
+        cmd = [self.osmium_path,'tags-filter',source_path,'-o',self.output_path]
+
+        for f in filters:
+            cmd.insert(3, f)
+
+        if planet_as_source is False:
+            cmd.append('--overwrite')
+
+        subprocess.check_call(cmd)
 
     def fetch(self):
         region_json = os.path.join(self.tempdir,'region.json')
@@ -61,9 +126,18 @@ class OsmiumTool:
     def path(self):
         if os.path.isfile(self.output_path) and self.use_existing:
             return self.output_path
-        else:
+
+        planet_as_source = True
+        if self.geom.area < 6e4:
             self.fetch()
+            planet_as_source = False
+
+        if self.mapping is not None:
+            filters = OsmiumTool.filters(self.mapping)
+            self.tags_filter(filters, planet_as_source)
+
         return self.output_path
+
 
 class Overpass:
     @classmethod
