@@ -71,14 +71,15 @@ class OsmiumTool:
 
     @staticmethod
     def get_element_filter(theme, part):
+        elements = []
         if theme.points:
-            element = "n/{0}" # node
+            elements.append("n/{0}".format(part)) # node
         if theme.lines:
-            element = "w/{0}" # way
+            elements.append("w/{0}".format(part)) # way
         if theme.polygons:
-            element = "r/{0}" # relation
+            elements.append("r/{0}".format(part)) # relation
 
-        return element.format(part)
+        return elements
 
     @classmethod
     def filters(cls,mapping):
@@ -88,7 +89,7 @@ class OsmiumTool:
             prefix = t.matcher.expr
             parts = cls.parts(prefix)
             for part in parts:
-                filters_set.add(OsmiumTool.get_element_filter(t, part))
+                [filters_set.add(e) for e in OsmiumTool.get_element_filter(t, part)]
                 key = [t for t in t.keys if t in part]
                 if len(key) == 1:
                     tags.add(key[0])
@@ -97,7 +98,7 @@ class OsmiumTool:
             for k in t.keys:
                 if k in tags:
                     continue
-                filters_set.add(OsmiumTool.get_element_filter(t, k))
+                [filters_set.add(e) for e in OsmiumTool.get_element_filter(t, k)]
 
         return filters_set
 
