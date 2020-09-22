@@ -249,11 +249,12 @@ class MultiGeopackage:
         self.layers = None
 
 class Handler(o.SimpleHandler):
-    def __init__(self,outputs,mapping,clipping_geom=None):
+    def __init__(self,outputs,mapping,clipping_geom=None, polygon_centroid=False):
         super(Handler, self).__init__()
         self.outputs = outputs
         self.mapping = mapping
         self.clipping_geom = clipping_geom
+        self.polygon_centroid = polygon_centroid
         if clipping_geom:
             self.prepared_clipping_geom = prep(clipping_geom)
 
@@ -309,6 +310,7 @@ class Handler(o.SimpleHandler):
             return
         osm_id = a.orig_id() if a.from_way() else -a.orig_id()
         try:
+            geom_type = GeomType.POLYGON
             multipolygon = None
             for theme in self.mapping.themes:
                 if theme.matches(GeomType.POLYGON,a.tags):
@@ -323,8 +325,14 @@ class Handler(o.SimpleHandler):
                             multipolygon = ogr.CreateGeometryFromWkb(dumps(sg))
                         else:
                             multipolygon = create_geom(wkb)
+
+                        geom = multipolygon
+                        if self.polygon_centroid is True:
+                            geom = multipolygon.Centroid()
+                            geom_type = GeomType.POINT
+
                     for output in self.outputs:
-                        output.write(osm_id,theme.name,GeomType.POLYGON,multipolygon,a.tags)
+                        output.write(osm_id,theme.name,geom_type,geom,a.tags)
         except RuntimeError:
             print('Invalid area: {0}'.format(a.orig_id()))
 
