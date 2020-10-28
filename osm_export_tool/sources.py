@@ -94,12 +94,6 @@ class OsmiumTool:
                 if len(key) == 1:
                     tags.add(key[0])
 
-            # Add missing fields not included within where clause.
-            for k in t.keys:
-                if k in tags:
-                    continue
-                [filters_set.add(e) for e in OsmiumTool.get_element_filter(t, k)]
-
         return filters_set
 
     def tags_filter(self, filters, planet_as_source):
