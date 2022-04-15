@@ -251,36 +251,54 @@ class Overpass:
 
 
 class Galaxy:
+    """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
     @classmethod
     def filters(cls,mapping):
-        nodes = set()
-        ways = set()
-        relations = set()
-
+        nodes,ways,relations = set(),set(),set()
+        geometryType,osmElements=[],[]
+        nodes_filter,ways_filter,relations_filter={},{},{}
         for t in mapping.themes:
             parts = cls.parts(t.matcher.expr)
-            # joined=','.join(parts)
-            # print(joined)
             if t.points:
+                geometryType.append("point")
                 for part in parts:
-                    nodes.add(part.strip())
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in nodes_filter:
+                            nodes_filter[key] = value
+                        else:
+                            nodes_filter[key] += value # dictionary already have that key defined update and add the value
             if t.lines:
+                geometryType.append("linestring") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+                geometryType.append("multilinestring")
                 for part in parts:
-                    ways.add(part.strip())
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in ways_filter:
+                            ways_filter[key] = value
+                        else:
+                            ways_filter[key] += value
             if t.polygons:
+                geometryType.append("polygon" ) # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
+                geometryType.append("multipolygon")
                 for part in parts:
-                    ways.add(part.strip())
-                    relations.add(part.strip())
-        print("nodes")
-        nodes_filter=f"""{'{'}{','.join(nodes)}{'}'}"""
-        print(nodes_filter)
-        print("ways")
-        ways_filter=f"""{'{'}{','.join(ways)}{'}'}"""
-        print(ways_filter)
-        print("relations")
-        relations_filter=f"""{'{'}{','.join(relations)}{'}'}"""
-        print(relations_filter)
-        return nodes,ways,relations
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in ways_filter: # checking duplicate keys since request body only supports dictionary key can not be duplicated , if there are multiple values for keys they should be appended to value as list
+                            ways_filter[key] = value
+                        else:
+                            ways_filter[key] += value
+                        if key not in relations_filter:
+                            relations_filter[key] = value
+                        else:
+                            relations_filter[key] += value
+        if nodes:
+            osmElements.append("nodes")
+        if ways:
+            osmElements.append("ways")
+        if relations:
+            osmElements.append("relations")
+        return nodes_filter,ways_filter,relations_filter,geometryType,osmElements
 
     # force quoting of strings to handle keys with colons
     @classmethod
@@ -289,7 +307,7 @@ class Galaxy:
             op = prefix[0]
             if op == '=':
                 return [""" "{0}":["{1}"] """.format(prefix[1],prefix[2])]
-            if op == '!=': # this will require improvement in galaxy api is not implemented yet
+            if op == '!=': #fixme this will require improvement in galaxy api is not implemented yet
                 pass
                 # return ["['{0}'!='{1}']".format(prefix[1],prefix[2])]
             if op in ['<','>','<=','>='] or op == 'notnull':
@@ -301,35 +319,39 @@ class Galaxy:
                 return _parts(prefix[1]) + _parts(prefix[2])
         return _parts(expr)
 
-    @classmethod
-    def sql(cls,str):
-        return cls.parts(to_prefix(str))
 
-    def __init__(self,hostname,geom,mapping=None,use_curl=False):
+    def __init__(self,hostname,geom,mapping=None):
         self.hostname = hostname
         self.geom = geom
-        self.mapping = mapping
-        self.use_curl = use_curl
-    
+        self.mapping = mapping    
 
     def fetch(self):
         if self.geom.geom_type == 'Polygon':
-            geom = 'poly:"{0}"'.format(' '.join(['{1} {0}'.format(*x) for x in self.geom.exterior.coords]))
-        else:
+            geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
+        else: #fixme
             bounds = self.geom.bounds
             west = max(bounds[0], -180)
             south = max(bounds[1], -90)
             east = min(bounds[2], 180)
             north = min(bounds[3], 90)
             geom = '{1},{0},{3},{2}'.format(west, south, east, north)
+          
         
         if self.mapping:
-            nodes,ways,relations = Galaxy.filters(self.mapping)
-
-    def path(self):
-        if os.path.isfile(self._path) and self.use_existing:
-            return self._path
+            nodes_filter,ways_filter,relations_filter,geometryType_filter,osmElements = Galaxy.filters(self.mapping)
+        
+            if nodes_filter == ways_filter == relations_filter : #Fixme if condition doesn't match , currently galaxy doesn't support different filters for different osm elements
+                osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+            else :
+                osmTags ={}
         else:
-            self.fetch()
-        return self._path
+            geometryType_filter={},[] # if nothing is provided we are getting all type of data back
+        request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements}
+        # sending post request and saving response as response object
+        print("Request Body Ready")
+        print(request_body)
+        headers = {'Content-type': "text/plain; charset=utf-8"}
+        with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
+            response_back = r.json()
+            return response_back
 
