@@ -254,7 +254,6 @@ class Galaxy:
     """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
     @classmethod
     def filters(cls,mapping):
-        nodes,ways,relations = set(),set(),set()
         geometryType,osmElements=[],[]
         nodes_filter,ways_filter,relations_filter={},{},{}
         for t in mapping.themes:
@@ -292,11 +291,11 @@ class Galaxy:
                             relations_filter[key] = value
                         else:
                             relations_filter[key] += value
-        if nodes:
+        if nodes_filter:
             osmElements.append("nodes")
-        if ways:
+        if ways_filter:
             osmElements.append("ways")
-        if relations:
+        if relations_filter:
             osmElements.append("relations")
         return nodes_filter,ways_filter,relations_filter,geometryType,osmElements
 
@@ -339,13 +338,13 @@ class Galaxy:
         
         if self.mapping:
             nodes_filter,ways_filter,relations_filter,geometryType_filter,osmElements = Galaxy.filters(self.mapping)
-        
-            if nodes_filter == ways_filter == relations_filter : #Fixme if condition doesn't match , currently galaxy doesn't support different filters for different osm elements
-                osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
-            else :
-                osmTags ={}
+            osmTags=nodes_filter
+            # if nodes_filter == ways_filter == relations_filter : #Fixme if condition doesn't match , currently galaxy doesn't support different filters for different osm elements
+            #     osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+            # else :
+            #     osmTags ={}
         else:
-            geometryType_filter={},[] # if nothing is provided we are getting all type of data back
+            geometryType_filter,osmElements=[] # if nothing is provided we are getting all type of data back
         request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements}
         # sending post request and saving response as response object
         print("Request Body Ready")
