@@ -269,7 +269,7 @@ class Galaxy:
                             nodes_filter[key] += value # dictionary already have that key defined update and add the value
             if t.lines:
                 geometryType.append("linestring") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
-                geometryType.append("multilinestring")
+                # geometryType.append("multilinestring") #FIxme : I will not add multilinestring here for now that means this filter will not go to relation feature , after testing we need to see how often multilinestrings will be used 
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
@@ -292,13 +292,23 @@ class Galaxy:
                         else:
                             relations_filter[key] += value
         if nodes_filter:
+            nodes_filter=cls.remove_duplicates(nodes_filter)
             osmElements.append("nodes")
         if ways_filter:
+            ways_filter=cls.remove_duplicates(ways_filter)
             osmElements.append("ways")
         if relations_filter:
+            relations_filter=cls.remove_duplicates(relations_filter)
             osmElements.append("relations")
         return nodes_filter,ways_filter,relations_filter,geometryType,osmElements
 
+    @classmethod
+    def remove_duplicates(cls,entries_dict):
+        for key,value in entries_dict.items():
+            entries_dict[key]=list(dict.fromkeys(value))
+        return entries_dict
+
+    
     # force quoting of strings to handle keys with colons
     @classmethod
     def parts(cls, expr):
@@ -345,13 +355,17 @@ class Galaxy:
             print("relation filter")
             print(relations_filter)
             osmTags=nodes_filter
-            # if nodes_filter == ways_filter == relations_filter : #Fixme if condition doesn't match , currently galaxy doesn't support different filters for different osm elements
-            #     osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
-            # else :
-            #     osmTags ={}
+            if nodes_filter == ways_filter == relations_filter : 
+                osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+            else :
+                osmTags ={}
         else:
             geometryType_filter,osmElements=[] # if nothing is provided we are getting all type of data back
-        request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements}
+        if osmTags: # if it is a master filter i.e. filter same for all type of feature
+            request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements}
+        else:
+            request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"nodesFilter":nodes_filter,"waysFilter":ways_filter,"relationFilter":relations_filter,"osmElements":osmElements}
+
         # sending post request and saving response as response object
         print("Request Body Ready")
         print(request_body)
