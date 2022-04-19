@@ -338,6 +338,12 @@ class Galaxy:
         
         if self.mapping:
             nodes_filter,ways_filter,relations_filter,geometryType_filter,osmElements = Galaxy.filters(self.mapping)
+            print("nodes filter")
+            print(nodes_filter)
+            print("ways_filter")
+            print(ways_filter)
+            print("relation filter")
+            print(relations_filter)
             osmTags=nodes_filter
             # if nodes_filter == ways_filter == relations_filter : #Fixme if condition doesn't match , currently galaxy doesn't support different filters for different osm elements
             #     osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
