@@ -255,52 +255,55 @@ class Galaxy:
     @classmethod
     def filters(cls,mapping):
         geometryType,osmElements=[],[]
-        nodes_filter,ways_filter,relations_filter={},{},{}
+        point_filter,line_filter,poly_filter={},{},{}
+        point_columns,line_columns,poly_columns=[],[],[]
+        
         for t in mapping.themes:
             parts = cls.parts(t.matcher.expr)
             if t.points:
+                point_columns=cls.attribute_filter(t)
                 geometryType.append("point")
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
-                        if key not in nodes_filter:
-                            nodes_filter[key] = value
+                        if key not in point_filter:
+                            point_filter[key] = value
                         else:
-                            nodes_filter[key] += value # dictionary already have that key defined update and add the value
+                            point_filter[key] += value # dictionary already have that key defined update and add the value
             if t.lines:
+                ways_select_filter=cls.attribute_filter(t)
+                line_columns=cls.attribute_filter(t)
+
+
                 geometryType.append("linestring") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
                 # geometryType.append("multilinestring") #FIxme : I will not add multilinestring here for now that means this filter will not go to relation feature , after testing we need to see how often multilinestrings will be used 
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
-                        if key not in ways_filter:
-                            ways_filter[key] = value
+                        if key not in line_filter:
+                            line_filter[key] = value
                         else:
-                            ways_filter[key] += value
+                            line_filter[key] += value
             if t.polygons:
+                poly_columns=cls.attribute_filter(t)
                 geometryType.append("polygon" ) # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
-                geometryType.append("multipolygon")
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
-                        if key not in ways_filter: # checking duplicate keys since request body only supports dictionary key can not be duplicated , if there are multiple values for keys they should be appended to value as list
-                            ways_filter[key] = value
+                        if key not in poly_filter:
+                            poly_filter[key] = value
                         else:
-                            ways_filter[key] += value
-                        if key not in relations_filter:
-                            relations_filter[key] = value
-                        else:
-                            relations_filter[key] += value
-        if nodes_filter:
-            nodes_filter=cls.remove_duplicates(nodes_filter)
+                            poly_filter[key] += value
+        if point_filter:
+            point_filter=cls.remove_duplicates(point_filter)
             osmElements.append("nodes")
-        if ways_filter:
-            ways_filter=cls.remove_duplicates(ways_filter)
+        if line_filter:
+            line_filter=cls.remove_duplicates(line_filter)
             osmElements.append("ways")
-        if relations_filter:
-            relations_filter=cls.remove_duplicates(relations_filter)
+        if poly_filter:
+            poly_filter=cls.remove_duplicates(poly_filter)
             osmElements.append("relations")
-        return nodes_filter,ways_filter,relations_filter,geometryType,osmElements
+        return point_filter,line_filter,poly_filter,geometryType,osmElements,point_columns,line_columns,poly_columns
 
     @classmethod
     def remove_duplicates(cls,entries_dict):
@@ -308,7 +311,6 @@ class Galaxy:
             entries_dict[key]=list(dict.fromkeys(value))
         return entries_dict
 
-    
     # force quoting of strings to handle keys with colons
     @classmethod
     def parts(cls, expr):
@@ -328,11 +330,15 @@ class Galaxy:
                 return _parts(prefix[1]) + _parts(prefix[2])
         return _parts(expr)
 
+    @classmethod
+    def attribute_filter(cls, theme):
+        columns = theme.keys
+        return list(columns)
 
     def __init__(self,hostname,geom,mapping=None):
         self.hostname = hostname
         self.geom = geom
-        self.mapping = mapping    
+        self.mapping = mapping  
 
     def fetch(self):
         if self.geom.geom_type == 'Polygon':
@@ -347,27 +353,37 @@ class Galaxy:
           
         
         if self.mapping:
-            nodes_filter,ways_filter,relations_filter,geometryType_filter,osmElements = Galaxy.filters(self.mapping)
-            print("nodes filter")
-            print(nodes_filter)
-            print("ways_filter")
-            print(ways_filter)
-            print("relation filter")
-            print(relations_filter)
-            osmTags=nodes_filter
-            if nodes_filter == ways_filter == relations_filter : 
-                osmTags=nodes_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+            point_filter,line_filter,poly_filter,geometryType_filter,osmElements,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
+            print("point filter")
+            print(point_filter)
+            print("line_filter")
+            print(line_filter)
+            print("poly filter")
+            print(poly_filter)
+            osmTags=point_filter
+            if point_filter == line_filter == poly_filter : 
+                osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
             else :
                 osmTags ={}
+            if point_columns == line_columns == poly_columns:
+                columns=point_columns
+            else :
+                columns =[]
         else:
             geometryType_filter,osmElements=[] # if nothing is provided we are getting all type of data back
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
-            request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements}
-        else:
-            request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"nodesFilter":nodes_filter,"waysFilter":ways_filter,"relationFilter":relations_filter,"osmElements":osmElements}
+            if columns:
+                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"columns":columns}
+            else :
+                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns}
 
+        else:
+            if columns:
+                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmElements":osmElements,"columns":columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
+            else :
+                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
         # sending post request and saving response as response object
-        print("Request Body Ready")
+        print("Request Body Ready \n")
         print(request_body)
         headers = {'Content-type': "text/plain; charset=utf-8"}
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
