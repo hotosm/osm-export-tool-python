@@ -340,7 +340,7 @@ class Galaxy:
         self.geom = geom
         self.mapping = mapping  
 
-    def fetch(self):
+    def fetch(self,output_format):
         if self.geom.geom_type == 'Polygon':
             geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
         else: #fixme
@@ -373,15 +373,15 @@ class Galaxy:
             geometryType_filter,osmElements=[] # if nothing is provided we are getting all type of data back
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
-                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"columns":columns}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"columns":columns}
             else :
-                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns}
 
         else:
             if columns:
-                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmElements":osmElements,"columns":columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmElements":osmElements,"columns":columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
             else :
-                request_body={"geometry":geom,"outputType":"GeoJSON","geometryType":geometryType_filter,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
         # sending post request and saving response as response object
         print("Request Body Ready \n")
         print(request_body)
