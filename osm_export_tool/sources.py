@@ -354,12 +354,12 @@ class Galaxy:
         
         if self.mapping:
             point_filter,line_filter,poly_filter,geometryType_filter,osmElements,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
-            print("point filter")
-            print(point_filter)
-            print("line_filter")
-            print(line_filter)
-            print("poly filter")
-            print(poly_filter)
+            # print("point filter")
+            # print(point_filter)
+            # print("line_filter")
+            # print(line_filter)
+            # print("poly filter")
+            # print(poly_filter)
             osmTags=point_filter
             if point_filter == line_filter == poly_filter : 
                 osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
@@ -383,7 +383,7 @@ class Galaxy:
             else :
                 request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
         # sending post request and saving response as response object
-        print("Request Body Ready \n")
+        print("\n Request Body Ready :")
         print(request_body)
         headers = {'Content-type': "text/plain; charset=utf-8"}
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
