@@ -254,7 +254,7 @@ class Galaxy:
     """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
     @classmethod
     def filters(cls,mapping):
-        geometryType,osmElements=[],[]
+        geometryType=[]
         point_filter,line_filter,poly_filter={},{},{}
         point_columns,line_columns,poly_columns=[],[],[]
         
@@ -275,7 +275,7 @@ class Galaxy:
                 line_columns=cls.attribute_filter(t)
 
 
-                geometryType.append("linestring") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+                geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
                 # geometryType.append("multilinestring") #FIxme : I will not add multilinestring here for now that means this filter will not go to relation feature , after testing we need to see how often multilinestrings will be used 
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
@@ -296,14 +296,11 @@ class Galaxy:
                             poly_filter[key] += value
         if point_filter:
             point_filter=cls.remove_duplicates(point_filter)
-            osmElements.append("nodes")
         if line_filter:
             line_filter=cls.remove_duplicates(line_filter)
-            osmElements.append("ways")
         if poly_filter:
             poly_filter=cls.remove_duplicates(poly_filter)
-            osmElements.append("relations")
-        return point_filter,line_filter,poly_filter,geometryType,osmElements,point_columns,line_columns,poly_columns
+        return point_filter,line_filter,poly_filter,geometryType,point_columns,line_columns,poly_columns
 
     @classmethod
     def remove_duplicates(cls,entries_dict):
@@ -335,11 +332,10 @@ class Galaxy:
         columns = theme.keys
         return list(columns)
 
-    def __init__(self,hostname,geom,mapping=None,file_name=""):
+    def __init__(self,hostname,geom,mapping=None):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping  
-        self.fileName=file_name
 
     def fetch(self,output_format):
         if self.geom.geom_type == 'Polygon':
@@ -354,7 +350,7 @@ class Galaxy:
           
         
         if self.mapping:
-            point_filter,line_filter,poly_filter,geometryType_filter,osmElements,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
+            point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
             # print("point filter")
             # print(point_filter)
             # print("line_filter")
@@ -371,18 +367,19 @@ class Galaxy:
             else :
                 columns =[]
         else:
-            geometryType_filter,osmElements=[] # if nothing is provided we are getting all type of data back
+            geometryType_filter=[] # if nothing is provided we are getting all type of data back
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
-                request_body={"geometry":geom,"fileName":self.fileName,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"columns":columns}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"fileName":self.fileName,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
 
         else:
             if columns:
-                request_body={"geometry":geom,"fileName":self.fileName,"outputType":output_format,"geometryType":geometryType_filter,"osmElements":osmElements,"columns":columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"fileName":self.fileName,"outputType":output_format,"geometryType":geometryType_filter,"osmElements":osmElements,"pointColumns":point_columns,"lineColumns":line_columns,"polyColumns":poly_columns,"pointFilter":point_filter,"lineFilter":line_filter,"polyFilter":poly_filter}
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
+
         # sending post request and saving response as response object
         print("\n Request Body Ready :")
         print(request_body)
