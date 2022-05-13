@@ -274,9 +274,7 @@ class Galaxy:
                 ways_select_filter=cls.attribute_filter(t)
                 line_columns=cls.attribute_filter(t)
 
-
                 geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
-                # geometryType.append("multilinestring") #FIxme : I will not add multilinestring here for now that means this filter will not go to relation feature , after testing we need to see how often multilinestrings will be used 
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
