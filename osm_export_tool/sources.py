@@ -250,3 +250,138 @@ class Overpass:
         return self._path
 
 
+class Galaxy:
+    """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
+    @classmethod
+    def filters(cls,mapping):
+        geometryType=[]
+        point_filter,line_filter,poly_filter={},{},{}
+        point_columns,line_columns,poly_columns=[],[],[]
+        
+        for t in mapping.themes:
+            parts = cls.parts(t.matcher.expr)
+            if t.points:
+                point_columns=cls.attribute_filter(t)
+                geometryType.append("point")
+                for part in parts:
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in point_filter:
+                            point_filter[key] = value
+                        else:
+                            point_filter[key] += value # dictionary already have that key defined update and add the value
+            if t.lines:
+                ways_select_filter=cls.attribute_filter(t)
+                line_columns=cls.attribute_filter(t)
+
+                geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+                for part in parts:
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in line_filter:
+                            line_filter[key] = value
+                        else:
+                            line_filter[key] += value
+            if t.polygons:
+                poly_columns=cls.attribute_filter(t)
+                geometryType.append("polygon" ) # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
+                for part in parts:
+                    part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                    for key,value in part_dict.items():
+                        if key not in poly_filter:
+                            poly_filter[key] = value
+                        else:
+                            poly_filter[key] += value
+        if point_filter:
+            point_filter=cls.remove_duplicates(point_filter)
+        if line_filter:
+            line_filter=cls.remove_duplicates(line_filter)
+        if poly_filter:
+            poly_filter=cls.remove_duplicates(poly_filter)
+        return point_filter,line_filter,poly_filter,geometryType,point_columns,line_columns,poly_columns
+
+    @classmethod
+    def remove_duplicates(cls,entries_dict):
+        for key,value in entries_dict.items():
+            entries_dict[key]=list(dict.fromkeys(value))
+        return entries_dict
+
+    # force quoting of strings to handle keys with colons
+    @classmethod
+    def parts(cls, expr):
+        def _parts(prefix):
+            op = prefix[0]
+            if op == '=':
+                return [""" "{0}":["{1}"] """.format(prefix[1],prefix[2])]
+            if op == '!=': #fixme this will require improvement in galaxy api is not implemented yet
+                pass
+                # return ["['{0}'!='{1}']".format(prefix[1],prefix[2])]
+            if op in ['<','>','<=','>='] or op == 'notnull':
+                return [""" "{0}":[] """.format(prefix[1])]
+            if op == 'in':
+                x = """ "{0}":["{1}"]""".format(prefix[1],""" "," """.join(prefix[2]))
+                return [x]
+            if op == 'and' or op == 'or':
+                return _parts(prefix[1]) + _parts(prefix[2])
+        return _parts(expr)
+
+    @classmethod
+    def attribute_filter(cls, theme):
+        columns = theme.keys
+        return list(columns)
+
+    def __init__(self,hostname,geom,mapping=None):
+        self.hostname = hostname
+        self.geom = geom
+        self.mapping = mapping  
+
+    def fetch(self,output_format):
+        if self.geom.geom_type == 'Polygon':
+            geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
+        else: #fixme
+            bounds = self.geom.bounds
+            west = max(bounds[0], -180)
+            south = max(bounds[1], -90)
+            east = min(bounds[2], 180)
+            north = min(bounds[3], 90)
+            geom = '{1},{0},{3},{2}'.format(west, south, east, north)
+          
+        
+        if self.mapping:
+            point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
+            # print("point filter")
+            # print(point_filter)
+            # print("line_filter")
+            # print(line_filter)
+            # print("poly filter")
+            # print(poly_filter)
+            osmTags=point_filter
+            if point_filter == line_filter == poly_filter : 
+                osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+            else :
+                osmTags ={}
+            if point_columns == line_columns == poly_columns:
+                columns=point_columns
+            else :
+                columns =[]
+        else:
+            geometryType_filter=[] # if nothing is provided we are getting all type of data back
+        if osmTags: # if it is a master filter i.e. filter same for all type of feature
+            if columns:
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+            else :
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+        else:
+            if columns:
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+            else :
+                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
+
+        # sending post request and saving response as response object
+        print("\n Request Body Ready :")
+        print(request_body)
+        headers = {'Content-type': "text/plain; charset=utf-8"}
+        with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
+            response_back = r.json()
+            return response_back
+
