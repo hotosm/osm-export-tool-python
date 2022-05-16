@@ -330,10 +330,11 @@ class Galaxy:
         columns = theme.keys
         return list(columns)
 
-    def __init__(self,hostname,geom,mapping=None):
+    def __init__(self,hostname,geom,mapping=None,file_name=""):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping  
+        self.file_name=file_name
 
     def fetch(self,output_format):
         if self.geom.geom_type == 'Polygon':
@@ -368,14 +369,14 @@ class Galaxy:
             geometryType_filter=[] # if nothing is provided we are getting all type of data back
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
         else:
             if columns:
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
 
         # sending post request and saving response as response object
         print("\n Request Body Ready :")
