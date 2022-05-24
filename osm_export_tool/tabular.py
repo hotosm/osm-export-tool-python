@@ -251,14 +251,25 @@ class MultiGeopackage:
 class Handler(o.SimpleHandler):
     def __init__(self,outputs,mapping,clipping_geom=None, polygon_centroid=False):
         super(Handler, self).__init__()
+        print("I am inside handler")
         self.outputs = outputs
+        print("after output")
         self.mapping = mapping
+        print("after mapping")
         self.clipping_geom = clipping_geom
+        print("after climming geom")
+
         self.polygon_centroid = polygon_centroid
+        
+        print("after polygon centroid")
         if clipping_geom:
-            self.prepared_clipping_geom = prep(clipping_geom)
+            print("inside clipping geom")
+            self.prepared_clipping_geom=None
+            self.prepared_clipping_geom = clipping_geom
+        print("I am after init and everything")
 
     def node(self,n):
+        print("inside node")
         if len(n.tags) == 0:
             return
         geom = None
@@ -275,6 +286,8 @@ class Handler(o.SimpleHandler):
                     output.write(n.id,theme.name,GeomType.POINT,geom,n.tags)
 
     def way(self, w):
+        print("inside way")
+
         if len(w.tags) == 0:
             return
         if w.is_closed() and closed_way_is_polygon(w.tags): # this will be handled in area()
@@ -304,6 +317,8 @@ class Handler(o.SimpleHandler):
             print("Incomplete way: {0}".format(w.id))
 
     def area(self,a):
+        print("inside relations")
+
         if len(a.tags) == 0:
             return
         if not closed_way_is_polygon(a.tags):

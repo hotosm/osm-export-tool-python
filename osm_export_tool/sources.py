@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+from xml.dom import ValidationErr
 import requests
 from string import Template
 from osm_export_tool.sql import to_prefix
@@ -223,11 +224,14 @@ class Overpass:
 
         if self.use_curl:
             with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
+                print(data)
                 query_txt.write(data)
+                print("data is written to disk")
             print(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
             subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
         else:
             with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
+                
                 with open(self.tmp_path, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
 
@@ -237,9 +241,11 @@ class Overpass:
                 raise Exception('Overpass failure')
             if 'remark' in sample[5]:
                 raise Exception(sample[5])
-
         # run osmconvert on the file
-        subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+        try:
+            subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+        except subprocess.CalledProcessError as e:
+            raise ValidationErr(e)
         os.remove(self.tmp_path)
 
     def path(self):
