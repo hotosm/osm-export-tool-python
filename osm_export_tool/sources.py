@@ -382,13 +382,18 @@ class Galaxy:
             if columns:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
 
         # sending post request and saving response as response object
         print("\n Request Body Ready :")
         print(request_body)
         headers = {'Content-type': "text/plain; charset=utf-8"}
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-            response_back = r.json()
-            return response_back
+            if r.status_code == 200 :
+                response_back = r.json()
+                print(response_back)
+                return response_back
+            else :
+                print(r.content)
+                raise ValueError("Error Fetching from Galaxy API")
 
