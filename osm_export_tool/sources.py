@@ -224,10 +224,7 @@ class Overpass:
 
         if self.use_curl:
             with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
-                print(data)
                 query_txt.write(data)
-                print("data is written to disk")
-            print(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
             subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
         else:
             with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
@@ -356,12 +353,6 @@ class Galaxy:
         
         if self.mapping:
             point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
-            # print("point filter")
-            # print(point_filter)
-            # print("line_filter")
-            # print(line_filter)
-            # print("poly filter")
-            # print(poly_filter)
             osmTags=point_filter
             if point_filter == line_filter == poly_filter : 
                 osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
@@ -385,13 +376,10 @@ class Galaxy:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
 
         # sending post request and saving response as response object
-        print("\n Request Body Ready :")
-        print(request_body)
         headers = {'Content-type': "text/plain; charset=utf-8"}
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
             if r.status_code == 200 :
                 response_back = r.json()
-                print(response_back)
                 return response_back
             else :
                 print(r.content)
