@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+from xml.dom import ValidationErr
 import requests
 from string import Template
 from osm_export_tool.sql import to_prefix
@@ -224,10 +225,10 @@ class Overpass:
         if self.use_curl:
             with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
                 query_txt.write(data)
-            print(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
             subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
         else:
             with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
+                
                 with open(self.tmp_path, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
 
@@ -237,9 +238,11 @@ class Overpass:
                 raise Exception('Overpass failure')
             if 'remark' in sample[5]:
                 raise Exception(sample[5])
-
         # run osmconvert on the file
-        subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+        try:
+            subprocess.check_call([self.osmconvert_path,self.tmp_path,'--out-pbf','-o='+self._path])
+        except subprocess.CalledProcessError as e:
+            raise ValidationErr(e)
         os.remove(self.tmp_path)
 
     def path(self):
@@ -330,10 +333,11 @@ class Galaxy:
         columns = theme.keys
         return list(columns)
 
-    def __init__(self,hostname,geom,mapping=None):
+    def __init__(self,hostname,geom,mapping=None,file_name=""):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping  
+        self.file_name=file_name
 
     def fetch(self,output_format):
         if self.geom.geom_type == 'Polygon':
@@ -349,12 +353,6 @@ class Galaxy:
         
         if self.mapping:
             point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
-            # print("point filter")
-            # print(point_filter)
-            # print("line_filter")
-            # print(line_filter)
-            # print("poly filter")
-            # print(poly_filter)
             osmTags=point_filter
             if point_filter == line_filter == poly_filter : 
                 osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
@@ -368,20 +366,22 @@ class Galaxy:
             geometryType_filter=[] # if nothing is provided we are getting all type of data back
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
         else:
             if columns:
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
-                request_body={"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_filter,"line":line_filter,"polygon":poly_filter}}}
+                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
 
         # sending post request and saving response as response object
-        print("\n Request Body Ready :")
-        print(request_body)
         headers = {'Content-type': "text/plain; charset=utf-8"}
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-            response_back = r.json()
-            return response_back
+            if r.status_code == 200 :
+                response_back = r.json()
+                return response_back
+            else :
+                print(r.content)
+                raise ValueError("Error Fetching from Galaxy API")
 
