@@ -294,7 +294,12 @@ class Galaxy:
                         if key not in poly_filter:
                             poly_filter[key] = value
                         else:
-                            poly_filter[key] += value
+                            if poly_filter.get(key) != []: #only add other values if not null condition is not applied to that key
+                                if value == [] : # if incoming value is not null i.e. key = * ignore previously added values
+                                    poly_filter[key] = value
+                                else:
+                                    poly_filter[key] += value # if value was not previously = * then and value is not =* then add values 
+
         if point_filter:
             point_filter=cls.remove_duplicates(point_filter)
         if line_filter:
@@ -377,6 +382,7 @@ class Galaxy:
 
         # sending post request and saving response as response object
         headers = {'Content-type': "text/plain; charset=utf-8"}
+        print(request_body)
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
             if r.status_code == 200 :
                 response_back = r.json()
