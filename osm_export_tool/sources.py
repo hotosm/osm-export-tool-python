@@ -255,6 +255,59 @@ class Overpass:
 
 class Galaxy:
     """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
+    
+    @classmethod
+    def hdx_filters(cls,t):
+        geometryType=[]
+        point_filter,line_filter,poly_filter={},{},{}
+        point_columns,line_columns,poly_columns=[],[],[]
+        parts = cls.parts(t.matcher.expr)
+        if t.points:
+            point_columns=cls.attribute_filter(t)
+            geometryType.append("point")
+            for part in parts:
+                part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                for key,value in part_dict.items():
+                    if key not in point_filter:
+                        point_filter[key] = value
+                    else:
+                        point_filter[key] += value # dictionary already have that key defined update and add the value
+        if t.lines:
+            ways_select_filter=cls.attribute_filter(t)
+            line_columns=cls.attribute_filter(t)
+
+            geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+            for part in parts:
+                part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                for key,value in part_dict.items():
+                    if key not in line_filter:
+                        line_filter[key] = value
+                    else:
+                        line_filter[key] += value
+        if t.polygons:
+            poly_columns=cls.attribute_filter(t)
+            geometryType.append("polygon" ) # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
+            for part in parts:
+                part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
+                for key,value in part_dict.items():
+                    if key not in poly_filter:
+                        poly_filter[key] = value
+                    else:
+                        if poly_filter.get(key) != []: #only add other values if not null condition is not applied to that key
+                            if value == [] : # if incoming value is not null i.e. key = * ignore previously added values
+                                poly_filter[key] = value
+                            else:
+                                poly_filter[key] += value # if value was not previously = * then and value is not =* then add values 
+
+        if point_filter:
+            point_filter=cls.remove_duplicates(point_filter)
+        if line_filter:
+            line_filter=cls.remove_duplicates(line_filter)
+        if poly_filter:
+            poly_filter=cls.remove_duplicates(poly_filter)
+        return point_filter,line_filter,poly_filter,geometryType,point_columns,line_columns,poly_columns
+
+    
     @classmethod
     def filters(cls,mapping):
         geometryType=[]
@@ -262,6 +315,7 @@ class Galaxy:
         point_columns,line_columns,poly_columns=[],[],[]
         
         for t in mapping.themes:
+            
             parts = cls.parts(t.matcher.expr)
             if t.points:
                 point_columns=cls.attribute_filter(t)
@@ -344,7 +398,7 @@ class Galaxy:
         self.mapping = mapping  
         self.file_name=file_name
 
-    def fetch(self,output_format):
+    def fetch(self,output_format,is_hdx_export=False):
         if self.geom.geom_type == 'Polygon':
             geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
         else: #fixme
@@ -357,18 +411,63 @@ class Galaxy:
           
         
         if self.mapping:
-            point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
-            osmTags=point_filter
-            if point_filter == line_filter == poly_filter : 
-                osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
-            else :
-                osmTags ={}
-            if point_columns == line_columns == poly_columns:
-                columns=point_columns
-            else :
-                columns =[]
+            if is_hdx_export:
+                fullresponse=[]
+                for t in self.mapping.themes:
+                    point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.hdx_filters(t)
+                    osmTags=point_filter
+                    if point_filter == line_filter == poly_filter : 
+                        osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+                    else :
+                        osmTags ={}
+                    if point_columns == line_columns == poly_columns:
+                        columns=point_columns
+                    else :
+                        columns =[]
+                    if len(geometryType_filter) == 0:
+                        geometryType_filter=["point","line","polygon"]
+                    
+                    for geomtype in geometryType_filter:
+                        geomtype_to_pass=[geomtype]
+                        if osmTags: # if it is a master filter i.e. filter same for all type of feature
+                            if columns:
+                                request_body={"fileName":f"""{self.file_name}_{t.name}_{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                            else :
+                                request_body={"fileName":f"""{self.file_name}_{t.name}_{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                        else:
+                            if columns:
+                                request_body={"fileName":f"""{self.file_name}_{t.name}_{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                            else :
+                                request_body={"fileName":f"""{self.file_name}_{t.name}_{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                        # sending post request and saving response as response object
+                        headers = {'Content-type': "text/plain; charset=utf-8"}
+                        # print(request_body)
+                        with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
+                            if r.status_code == 200 :
+                                response_back = r.json()
+                                response_back['theme'] = t.name
+                                response_back['output_name'] = output_format
+
+                                # print(response_back)
+                                fullresponse.append(response_back)
+                            else :
+                                # print(r.content)
+                                raise ValueError("Error Fetching from Galaxy API")
+                return fullresponse
+            else:
+                point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
+                osmTags=point_filter
+                if point_filter == line_filter == poly_filter : 
+                    osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+                else :
+                    osmTags ={}
+                if point_columns == line_columns == poly_columns:
+                    columns=point_columns
+                else :
+                    columns =[]
         else:
             geometryType_filter=[] # if nothing is provided we are getting all type of data back
+        
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
@@ -379,15 +478,13 @@ class Galaxy:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
-
-        # sending post request and saving response as response object
         headers = {'Content-type': "text/plain; charset=utf-8"}
-        print(request_body)
+        # print(request_body)
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
             if r.status_code == 200 :
                 response_back = r.json()
-                return response_back
+                return [response_back]
             else :
-                print(r.content)
+                # print(r.content)
                 raise ValueError("Error Fetching from Galaxy API")
 
