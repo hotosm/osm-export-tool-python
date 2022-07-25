@@ -251,22 +251,14 @@ class MultiGeopackage:
 class Handler(o.SimpleHandler):
     def __init__(self,outputs,mapping,clipping_geom=None, polygon_centroid=False):
         super(Handler, self).__init__()
-        print("I am inside handler")
         self.outputs = outputs
-        print("after output")
         self.mapping = mapping
-        print("after mapping")
         self.clipping_geom = clipping_geom
-        print("after climming geom")
-
         self.polygon_centroid = polygon_centroid
-        
-        print("after polygon centroid")
+
         if clipping_geom:
-            print("inside clipping geom")
             self.prepared_clipping_geom=None
             self.prepared_clipping_geom = prep(clipping_geom)
-        print("I am after init and everything")
 
     def node(self,n):
         if len(n.tags) == 0:
