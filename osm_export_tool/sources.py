@@ -478,7 +478,7 @@ class Galaxy:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
             else :
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
-        headers = {'Content-type': "text/plain; charset=utf-8"}
+        headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
             if r.ok :
