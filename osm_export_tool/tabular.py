@@ -255,7 +255,9 @@ class Handler(o.SimpleHandler):
         self.mapping = mapping
         self.clipping_geom = clipping_geom
         self.polygon_centroid = polygon_centroid
+
         if clipping_geom:
+            self.prepared_clipping_geom=None
             self.prepared_clipping_geom = prep(clipping_geom)
 
     def node(self,n):
