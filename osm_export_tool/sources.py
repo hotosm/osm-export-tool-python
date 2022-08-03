@@ -440,10 +440,10 @@ class Galaxy:
                             else :
                                 request_body={"fileName":f"""{self.file_name}-{t.name}-{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
                         # sending post request and saving response as response object
-                        headers = {'Content-type': "text/plain; charset=utf-8"}
+                        headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
                         with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-                            if r.status_code == 200 :
+                            if r.ok :
                                 response_back = r.json()
                                 response_back['theme'] = t.name
                                 response_back['output_name'] = output_format
@@ -452,7 +452,7 @@ class Galaxy:
                                 fullresponse.append(response_back)
                             else :
                                 # print(r.content)
-                                raise ValueError("Error Fetching from Galaxy API")
+                                raise ValueError(r.content)
                 return fullresponse
             else:
                 point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
