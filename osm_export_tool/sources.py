@@ -4,6 +4,7 @@ import shutil
 import subprocess
 from xml.dom import ValidationErr
 import requests
+from requests.exceptions import Timeout
 from string import Template
 from osm_export_tool.sql import to_prefix
 import shapely.geometry
@@ -442,17 +443,20 @@ class Galaxy:
                         # sending post request and saving response as response object
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
-                        with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-                            if r.ok :
-                                response_back = r.json()
-                                response_back['theme'] = t.name
-                                response_back['output_name'] = output_format
+                        try :
+                            with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2) as r : # no curl option , only request for now curl can be implemented when we see it's usage
+                                if r.ok :
+                                    response_back = r.json()
+                                    response_back['theme'] = t.name
+                                    response_back['output_name'] = output_format
 
-                                # print(response_back)
-                                fullresponse.append(response_back)
-                            else :
-                                # print(r.content)
-                                raise ValueError(r.content)
+                                    # print(response_back)
+                                    fullresponse.append(response_back)
+                                else :
+                                    # print(r.content)
+                                    raise ValueError(r.content)
+                        except Timeout:
+                            raise Timeout
                 return fullresponse
             else:
                 point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
@@ -480,10 +484,13 @@ class Galaxy:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
-        with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-            if r.ok :
-                response_back = r.json()
-                return [response_back]
-            else :
-                raise ValueError(r.content)
+        try:
+            with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2) as r : # no curl option , only request for now curl can be implemented when we see it's usage
+                if r.ok :
+                    response_back = r.json()
+                    return [response_back]
+                else :
+                    raise ValueError(r.content)
+        except Timeout:
+            raise Timeout
 
