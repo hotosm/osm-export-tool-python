@@ -445,7 +445,7 @@ class Galaxy:
                         # print(request_body)
                         try :
                             r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-                            r.raise_for_status()
+                            # r.raise_for_status()
                             if r.ok :
                                 response_back = r.json()
                                 response_back['theme'] = t.name
@@ -455,8 +455,9 @@ class Galaxy:
                             else :
                                 # print(r.content)
                                 raise ValueError(r.content)
-                        except Exception as e:
+                        except requests.exceptions.RequestException as e:
                             raise e
+                            
                 return fullresponse
             else:
                 point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
@@ -486,12 +487,12 @@ class Galaxy:
         # print(request_body)
         try:
             r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-            r.raise_for_status()
+            # r.raise_for_status()
             if r.ok :
                 response_back = r.json()
                 return [response_back]
             else :
                 raise ValueError(r.content)
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             raise e
 
