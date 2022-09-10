@@ -444,17 +444,16 @@ class Galaxy:
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
                         try :
-                            with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-                                if r.ok :
-                                    response_back = r.json()
-                                    response_back['theme'] = t.name
-                                    response_back['output_name'] = output_format
-
-                                    # print(response_back)
-                                    fullresponse.append(response_back)
-                                else :
-                                    # print(r.content)
-                                    raise ValueError(r.content)
+                            r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+                            if r.ok :
+                                response_back = r.json()
+                                response_back['theme'] = t.name
+                                response_back['output_name'] = output_format
+                                # print(response_back)
+                                fullresponse.append(response_back)
+                            else :
+                                # print(r.content)
+                                raise ValueError(r.content)
                         except Timeout:
                             raise Timeout
                 return fullresponse
@@ -485,12 +484,12 @@ class Galaxy:
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         try:
-            with requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2) as r : # no curl option , only request for now curl can be implemented when we see it's usage
-                if r.ok :
-                    response_back = r.json()
-                    return [response_back]
-                else :
-                    raise ValueError(r.content)
+            r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+            if r.ok :
+                response_back = r.json()
+                return [response_back]
+            else :
+                raise ValueError(r.content)
         except Timeout:
             raise Timeout
 
