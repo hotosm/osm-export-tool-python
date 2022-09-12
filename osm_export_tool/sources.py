@@ -444,17 +444,18 @@ class Galaxy:
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
                         try :
-                            r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-                            r.raise_for_status()
-                            if r.ok :
-                                response_back = r.json()
-                                response_back['theme'] = t.name
-                                response_back['output_name'] = output_format
-                                # print(response_back)
-                                fullresponse.append(response_back)
-                            else :
-                                # print(r.content)
-                                raise ValueError(r.content)
+                            with requests.Session() as req_session:
+                                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+                                r.raise_for_status()
+                                if r.ok :
+                                    response_back = r.json()
+                                    response_back['theme'] = t.name
+                                    response_back['output_name'] = output_format
+                                    # print(response_back)
+                                    fullresponse.append(response_back)
+                                else :
+                                    # print(r.content)
+                                    raise ValueError(r.content)
                         except requests.exceptions.RequestException as e:
                             raise e
                             
@@ -486,13 +487,14 @@ class Galaxy:
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         try:
-            r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-            r.raise_for_status()
-            if r.ok :
-                response_back = r.json()
-                return [response_back]
-            else :
-                raise ValueError(r.content)
+            with requests.Session() as req_session:
+                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+                r.raise_for_status()
+                if r.ok :
+                    response_back = r.json()
+                    return [response_back]
+                else :
+                    raise ValueError(r.content)
         except requests.exceptions.RequestException as e:
             raise e
 
