@@ -445,7 +445,7 @@ class Galaxy:
                         # print(request_body)
                         try :
                             with requests.Session() as req_session:
-                                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+                                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*45)
                                 r.raise_for_status()
                                 if r.ok :
                                     response_back = r.json()
@@ -488,7 +488,7 @@ class Galaxy:
         # print(request_body)
         try:
             with requests.Session() as req_session:
-                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
+                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*45)
                 r.raise_for_status()
                 if r.ok :
                     response_back = r.json()
