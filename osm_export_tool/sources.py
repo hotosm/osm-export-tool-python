@@ -445,7 +445,7 @@ class Galaxy:
                         # print(request_body)
                         try :
                             r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-                            # r.raise_for_status()
+                            r.raise_for_status()
                             if r.ok :
                                 response_back = r.json()
                                 response_back['theme'] = t.name
@@ -487,7 +487,7 @@ class Galaxy:
         # print(request_body)
         try:
             r=requests.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*60*2)
-            # r.raise_for_status()
+            r.raise_for_status()
             if r.ok :
                 response_back = r.json()
                 return [response_back]
