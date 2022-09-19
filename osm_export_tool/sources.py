@@ -229,7 +229,7 @@ class Overpass:
             subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
         else:
             with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
-                
+
                 with open(self.tmp_path, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
 
@@ -256,7 +256,7 @@ class Overpass:
 
 class Galaxy:
     """Transfers Yaml Language to Galaxy Query Make a request and sends response back from fetch()"""
-    
+
     @classmethod
     def hdx_filters(cls,t):
         geometryType=[]
@@ -277,7 +277,7 @@ class Galaxy:
             ways_select_filter=cls.attribute_filter(t)
             line_columns=cls.attribute_filter(t)
 
-            geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+            geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
             for part in parts:
                 part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                 for key,value in part_dict.items():
@@ -298,7 +298,7 @@ class Galaxy:
                             if value == [] : # if incoming value is not null i.e. key = * ignore previously added values
                                 poly_filter[key] = value
                             else:
-                                poly_filter[key] += value # if value was not previously = * then and value is not =* then add values 
+                                poly_filter[key] += value # if value was not previously = * then and value is not =* then add values
 
         if point_filter:
             point_filter=cls.remove_duplicates(point_filter)
@@ -308,15 +308,15 @@ class Galaxy:
             poly_filter=cls.remove_duplicates(poly_filter)
         return point_filter,line_filter,poly_filter,geometryType,point_columns,line_columns,poly_columns
 
-    
+
     @classmethod
     def filters(cls,mapping):
         geometryType=[]
         point_filter,line_filter,poly_filter={},{},{}
         point_columns,line_columns,poly_columns=[],[],[]
-        
+
         for t in mapping.themes:
-            
+
             parts = cls.parts(t.matcher.expr)
             if t.points:
                 point_columns=cls.attribute_filter(t)
@@ -332,7 +332,7 @@ class Galaxy:
                 ways_select_filter=cls.attribute_filter(t)
                 line_columns=cls.attribute_filter(t)
 
-                geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features 
+                geometryType.append("line") # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
                 for part in parts:
                     part_dict=json.loads(f"""{'{'}{part.strip()}{'}'}""")
                     for key,value in part_dict.items():
@@ -353,7 +353,7 @@ class Galaxy:
                                 if value == [] : # if incoming value is not null i.e. key = * ignore previously added values
                                     poly_filter[key] = value
                                 else:
-                                    poly_filter[key] += value # if value was not previously = * then and value is not =* then add values 
+                                    poly_filter[key] += value # if value was not previously = * then and value is not =* then add values
 
         if point_filter:
             point_filter=cls.remove_duplicates(point_filter)
@@ -396,29 +396,26 @@ class Galaxy:
     def __init__(self,hostname,geom,mapping=None,file_name=""):
         self.hostname = hostname
         self.geom = geom
-        self.mapping = mapping  
+        self.mapping = mapping
         self.file_name=file_name
 
     def fetch(self,output_format,is_hdx_export=False):
         if self.geom.geom_type == 'Polygon':
             geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
-        else: #fixme
-            bounds = self.geom.bounds
-            west = max(bounds[0], -180)
-            south = max(bounds[1], -90)
-            east = min(bounds[2], 180)
-            north = min(bounds[3], 90)
-            geom = '{1},{0},{3},{2}'.format(west, south, east, north)
-          
-        
+        elif self.geom.geom_type == 'MultiPolygon' and len(list(self.geom))==1: # if it is labed as multipolygon but has only one feature
+            geom=shapely.geometry.mapping(list(self.geom)[0])
+        else :
+            shapefile_polygon=shapely.geometry.box(*self.geom.bounds, ccw=True)
+            geom = shapely.geometry.mapping(shapefile_polygon)
+
         if self.mapping:
             if is_hdx_export:
                 fullresponse=[]
                 for t in self.mapping.themes:
                     point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.hdx_filters(t)
                     osmTags=point_filter
-                    if point_filter == line_filter == poly_filter : 
-                        osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+                    if point_filter == line_filter == poly_filter :
+                        osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api
                     else :
                         osmTags ={}
                     if point_columns == line_columns == poly_columns:
@@ -427,7 +424,7 @@ class Galaxy:
                         columns =[]
                     if len(geometryType_filter) == 0:
                         geometryType_filter=["point","line","polygon"]
-                    
+
                     for geomtype in geometryType_filter:
                         geomtype_to_pass=[geomtype]
                         if osmTags: # if it is a master filter i.e. filter same for all type of feature
@@ -458,13 +455,13 @@ class Galaxy:
                                     raise ValueError(r.content)
                         except requests.exceptions.RequestException as e:
                             raise e
-                            
+
                 return fullresponse
             else:
                 point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.filters(self.mapping)
                 osmTags=point_filter
-                if point_filter == line_filter == poly_filter : 
-                    osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api 
+                if point_filter == line_filter == poly_filter :
+                    osmTags=point_filter # master filter that will be applied to all type of osm elements : current implementation of galaxy api
                 else :
                     osmTags ={}
                 if point_columns == line_columns == poly_columns:
@@ -473,7 +470,7 @@ class Galaxy:
                     columns =[]
         else:
             geometryType_filter=[] # if nothing is provided we are getting all type of data back
-        
+
         if osmTags: # if it is a master filter i.e. filter same for all type of feature
             if columns:
                 request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
