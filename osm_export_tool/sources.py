@@ -460,7 +460,7 @@ class Galaxy:
                                                 res = r.json()
                                                 if res['status']=='SUCCESS':
                                                     success = True
-                                                    response_back=res['result'].json()
+                                                    response_back=res['result']
                                                     response_back['theme'] = t.name
                                                     response_back['output_name'] = output_format
                                                     fullresponse.append(response_back)
@@ -515,7 +515,7 @@ class Galaxy:
                             res = r.json()
                             if res['status']=='SUCCESS':
                                 success = True
-                                return [res['result'].json()]
+                                return [res['result']]
                             else:
                                 time.sleep(10) # Check each 10 seconds
 
