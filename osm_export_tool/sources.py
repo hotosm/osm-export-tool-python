@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from sre_constants import SUCCESS
 import subprocess
 from xml.dom import ValidationErr
 import requests
@@ -8,6 +9,7 @@ from requests.exceptions import Timeout
 from string import Template
 from osm_export_tool.sql import to_prefix
 import shapely.geometry
+import time
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
 
@@ -179,7 +181,7 @@ class Overpass:
         return cls.parts(to_prefix(str))
 
     def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert',mapping=None,use_curl=False):
-        self.hostname = hostname
+        f"{self.hostname}v2/raw-data/current-snapshot/" = hostname
         self._path = path
         self.geom = geom
         self.use_existing = use_existing
@@ -226,9 +228,9 @@ class Overpass:
         if self.use_curl:
             with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
                 query_txt.write(data)
-            subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
+            subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(f"{self.hostname}v2/raw-data/current-snapshot/",'api','interpreter'),'-o',self.tmp_path])
         else:
-            with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
+            with requests.post(os.path.join(f"{self.hostname}v2/raw-data/current-snapshot/",'api','interpreter'),data=data, stream=True) as r:
 
                 with open(self.tmp_path, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
@@ -442,17 +444,28 @@ class Galaxy:
                         # print(request_body)
                         try :
                             with requests.Session() as req_session:
-                                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*45)
+                                r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*45)
                                 r.raise_for_status()
                                 if r.ok :
-                                    response_back = r.json()
-                                    response_back['theme'] = t.name
-                                    response_back['output_name'] = output_format
-                                    # print(response_back)
-                                    fullresponse.append(response_back)
+                                    res = r.json()
+                                    task_id=res['task_id']
                                 else :
-                                    # print(r.content)
                                     raise ValueError(r.content)
+                                    if task_id :
+                                        success = False
+                                        while not success:
+                                            r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}",timeout=60*5)
+                                            r.raise_for_status()
+                                            if r.ok :
+                                                res = r.json()
+                                                if res['status']=='SUCCESS':
+                                                    success = True
+                                                    response_back=res['result'].json()
+                                                    response_back['theme'] = t.name
+                                                    response_back['output_name'] = output_format
+                                                    fullresponse.append(response_back)
+                                                else:
+                                                    time.sleep(60) # Check every min for hdx
                         except requests.exceptions.RequestException as e:
                             raise e
 
@@ -485,13 +498,27 @@ class Galaxy:
         # print(request_body)
         try:
             with requests.Session() as req_session:
-                r=req_session.post(url = self.hostname, data = json.dumps(request_body) ,headers=headers,timeout=60*45)
+                task_id=None
+                r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                 r.raise_for_status()
                 if r.ok :
-                    response_back = r.json()
-                    return [response_back]
+                    res = r.json()
+                    task_id=res['task_id']
                 else :
                     raise ValueError(r.content)
+                if task_id :
+                    success = False
+                    while not success:
+                        r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}",timeout=60*5)
+                        r.raise_for_status()
+                        if r.ok :
+                            res = r.json()
+                            if res['status']=='SUCCESS':
+                                success = True
+                                return [res['result'].json()]
+                            else:
+                                time.sleep(10) # Check each 10 seconds
+
         except requests.exceptions.RequestException as e:
             raise e
 
