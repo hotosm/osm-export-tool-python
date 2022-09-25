@@ -181,7 +181,7 @@ class Overpass:
         return cls.parts(to_prefix(str))
 
     def __init__(self,hostname,geom,path,use_existing=True,tempdir=None,osmconvert_path='osmconvert',mapping=None,use_curl=False):
-        f"{self.hostname}v2/raw-data/current-snapshot/" = hostname
+        self.hostname = hostname
         self._path = path
         self.geom = geom
         self.use_existing = use_existing
@@ -228,9 +228,9 @@ class Overpass:
         if self.use_curl:
             with open(os.path.join(self.tempdir,'query.txt'),'w') as query_txt:
                 query_txt.write(data)
-            subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(f"{self.hostname}v2/raw-data/current-snapshot/",'api','interpreter'),'-o',self.tmp_path])
+            subprocess.check_call(['curl','-X','POST','-d','@'+os.path.join(self.tempdir,'query.txt'),os.path.join(self.hostname,'api','interpreter'),'-o',self.tmp_path])
         else:
-            with requests.post(os.path.join(f"{self.hostname}v2/raw-data/current-snapshot/",'api','interpreter'),data=data, stream=True) as r:
+            with requests.post(os.path.join(self.hostname,'api','interpreter'),data=data, stream=True) as r:
 
                 with open(self.tmp_path, 'wb') as f:
                     shutil.copyfileobj(r.raw, f)
