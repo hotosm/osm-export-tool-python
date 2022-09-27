@@ -451,21 +451,21 @@ class Galaxy:
                                     task_id=res['task_id']
                                 else :
                                     raise ValueError(r.content)
-                                    if task_id :
-                                        success = False
-                                        while not success:
-                                            r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}",timeout=60*5)
-                                            r.raise_for_status()
-                                            if r.ok :
-                                                res = r.json()
-                                                if res['status']=='SUCCESS':
-                                                    success = True
-                                                    response_back=res['result']
-                                                    response_back['theme'] = t.name
-                                                    response_back['output_name'] = output_format
-                                                    fullresponse.append(response_back)
-                                                else:
-                                                    time.sleep(60) # Check every min for hdx
+                                if task_id :
+                                    success = False
+                                    while not success:
+                                        r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}",timeout=60*5)
+                                        r.raise_for_status()
+                                        if r.ok :
+                                            res = r.json()
+                                            if res['status']=='SUCCESS':
+                                                success = True
+                                                response_back=res['result']
+                                                response_back['theme'] = t.name
+                                                response_back['output_name'] = output_format
+                                                fullresponse.append(response_back)
+                                            else:
+                                                time.sleep(60) # Check every min for hdx
                         except requests.exceptions.RequestException as e:
                             raise e
 
