@@ -454,7 +454,7 @@ class Galaxy:
                                 if task_id :
                                     success = False
                                     while not success:
-                                        r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}/",timeout=60*5)
+                                        r=req_session.get(url = f"{self.hostname}v2/tasks/status/{task_id}/",timeout=60*5)
                                         r.raise_for_status()
                                         if r.ok :
                                             res = r.json()
@@ -509,7 +509,7 @@ class Galaxy:
                 if task_id :
                     success = False
                     while not success:
-                        r=req_session.get(url = f"{self.hostname}v2/raw-data/current-snapshot/tasks/{task_id}/",timeout=60*5)
+                        r=req_session.get(url = f"{self.hostname}v2/tasks/status/{task_id}/",timeout=60*5)
                         r.raise_for_status()
                         if r.ok :
                             res = r.json()
