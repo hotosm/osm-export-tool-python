@@ -448,26 +448,27 @@ class Galaxy:
                                 r.raise_for_status()
                                 if r.ok :
                                     res = r.json()
-                                    task_id=res['task_id']
                                 else :
                                     raise ValueError(r.content)
-                                if task_id :
-                                    success = False
-                                    while not success:
-                                        r=req_session.get(url = f"{self.hostname}v2/tasks/status/{task_id}/",timeout=60*5)
-                                        r.raise_for_status()
-                                        if r.ok :
-                                            res = r.json()
-                                            if res['status']=='SUCCESS':
-                                                success = True
-                                                response_back=res['result']
-                                                response_back['theme'] = t.name
-                                                response_back['output_name'] = output_format
-                                                fullresponse.append(response_back)
-                                            else:
-                                                time.sleep(5) # Check every 5s for hdx
-                        except requests.exceptions.RequestException as e:
-                            raise e
+                            url = f"{self.hostname}v2{res['track_link']}"
+                            success = False
+                            while not success:
+                                with requests.Session() as api:
+                                    r = api.get(url)
+                                    r.raise_for_status()
+                                    if r.ok :
+                                        res = r.json()
+                                        if res['status']=='SUCCESS':
+                                            success = True
+                                            response_back=res['result']
+                                            response_back['theme'] = t.name
+                                            response_back['output_name'] = output_format
+                                            fullresponse.append(response_back)
+                                        else:
+                                            time.sleep(5) # Check every 5s for hdx
+
+                        except requests.exceptions.RequestException as ex:
+                            raise ex
 
                 return fullresponse
             else:
@@ -503,21 +504,21 @@ class Galaxy:
                 r.raise_for_status()
                 if r.ok :
                     res = r.json()
-                    task_id=res['task_id']
                 else :
                     raise ValueError(r.content)
-                if task_id :
-                    success = False
-                    while not success:
-                        r=req_session.get(url = f"{self.hostname}v2/tasks/status/{task_id}/",timeout=60*5)
-                        r.raise_for_status()
-                        if r.ok :
-                            res = r.json()
-                            if res['status']=='SUCCESS':
-                                success = True
-                                return [res['result']]
-                            else:
-                                time.sleep(2) # Check each 2 seconds
+            url = f"{self.hostname}v2{res['track_link']}"
+            success = False
+            while not success:
+                with requests.Session() as api:
+                    r = api.get(url)
+                    r.raise_for_status()
+                    if r.ok :
+                        res = r.json()
+                        if res['status']=='SUCCESS':
+                            success = True
+                            return [res['result']]
+                        else:
+                            time.sleep(2) # Check each 2 seconds
 
         except requests.exceptions.RequestException as e:
             raise e
