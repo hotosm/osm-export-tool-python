@@ -10,6 +10,8 @@ from string import Template
 from osm_export_tool.sql import to_prefix
 import shapely.geometry
 import time
+import pathlib
+from deepdiff import DeepDiff
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
 
@@ -401,7 +403,10 @@ class Galaxy:
         self.mapping = mapping
         self.file_name=file_name
 
-    def fetch(self,output_format,is_hdx_export=False):
+    def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None):
+        if all_feature_filter_json:
+            with open (all_feature_filter_json, encoding = 'utf-8') as all_features:
+                all_features_filters = json.loads(all_features.read())
         if self.geom.geom_type == 'Polygon':
             geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
         elif self.geom.geom_type == 'MultiPolygon' and len(list(self.geom))==1: # if it is labed as multipolygon but has only one feature
@@ -444,6 +449,9 @@ class Galaxy:
                         # print(request_body)
                         try :
                             with requests.Session() as req_session:
+                                if all_feature_filter_json:
+                                    if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
+                                        request_body['filters']={}
                                 r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*45)
                                 r.raise_for_status()
                                 if r.ok :
@@ -499,7 +507,10 @@ class Galaxy:
         # print(request_body)
         try:
             with requests.Session() as req_session:
-                task_id=None
+                if all_feature_filter_json:
+                    if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
+                        request_body['filters']={}
+                print(request_body)
                 r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                 r.raise_for_status()
                 if r.ok :
