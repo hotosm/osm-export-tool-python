@@ -473,7 +473,7 @@ class Galaxy:
                                             response_back['output_name'] = output_format
                                             fullresponse.append(response_back)
                                         else:
-                                            time.sleep(5) # Check every 5s for hdx
+                                            time.sleep(2) # Check every 2s for hdx
 
                         except requests.exceptions.RequestException as ex:
                             raise ex
