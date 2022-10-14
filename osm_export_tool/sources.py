@@ -545,10 +545,12 @@ class Galaxy:
                                 time.sleep(1) # Check each 1 seconds
             else:
                 with requests.Session() as req_session:
+                    print(request_body)
                     r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*30)
                     r.raise_for_status()
                     if r.ok :
                         response_back = r.json()
+                        print(response_back)
                         return [response_back]
                     else :
                         raise ValueError(r.content)
