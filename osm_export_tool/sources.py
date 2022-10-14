@@ -403,7 +403,7 @@ class Galaxy:
         self.mapping = mapping
         self.file_name=file_name
 
-    def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None):
+    def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None,use_v2=False):
         if all_feature_filter_json:
             with open (all_feature_filter_json, encoding = 'utf-8') as all_features:
                 all_features_filters = json.loads(all_features.read())
@@ -448,33 +448,45 @@ class Galaxy:
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
                         try :
-                            with requests.Session() as req_session:
-                                if all_feature_filter_json:
+                            if all_feature_filter_json:
                                     if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
                                         request_body['filters']={}
-                                r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*45)
-                                r.raise_for_status()
-                                if r.ok :
-                                    res = r.json()
-                                else :
-                                    raise ValueError(r.content)
-                            url = f"{self.hostname}v2{res['track_link']}"
-                            success = False
-                            while not success:
-                                with requests.Session() as api:
-                                    r = api.get(url)
+                            if use_v2 :
+                                with requests.Session() as req_session:
+                                    r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                                     r.raise_for_status()
                                     if r.ok :
                                         res = r.json()
-                                        if res['status']=='SUCCESS':
-                                            success = True
-                                            response_back=res['result']
-                                            response_back['theme'] = t.name
-                                            response_back['output_name'] = output_format
-                                            fullresponse.append(response_back)
-                                        else:
-                                            time.sleep(2) # Check every 2s for hdx
-
+                                    else :
+                                        raise ValueError(r.content)
+                                url = f"{self.hostname}v2{res['track_link']}"
+                                success = False
+                                while not success:
+                                    with requests.Session() as api:
+                                        r = api.get(url)
+                                        r.raise_for_status()
+                                        if r.ok :
+                                            res = r.json()
+                                            if res['status']=='SUCCESS':
+                                                success = True
+                                                response_back=res['result']
+                                                response_back['theme'] = t.name
+                                                response_back['output_name'] = output_format
+                                                fullresponse.append(response_back)
+                                            else:
+                                                time.sleep(2) # Check every 2s for hdx
+                            else:
+                                with requests.Session() as req_session:
+                                    r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*30)
+                                    r.raise_for_status()
+                                    if r.ok :
+                                        response_back = r.json()
+                                        response_back['theme'] = t.name
+                                        response_back['output_name'] = output_format
+                                        # print(response_back)
+                                        fullresponse.append(response_back)
+                                    else :
+                                        raise ValueError(r.content)
                         except requests.exceptions.RequestException as ex:
                             raise ex
 
@@ -506,31 +518,41 @@ class Galaxy:
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         try:
-            with requests.Session() as req_session:
-                if all_feature_filter_json:
-                    if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
-                        request_body['filters']={}
-                print(request_body)
-                r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
-                r.raise_for_status()
-                if r.ok :
-                    res = r.json()
-                else :
-                    raise ValueError(r.content)
-            url = f"{self.hostname}v2{res['track_link']}"
-            success = False
-            while not success:
-                with requests.Session() as api:
-                    r = api.get(url)
+            if all_feature_filter_json:
+                if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
+                    request_body['filters']={}
+            if use_v2:
+                with requests.Session() as req_session:
+                    print(request_body)
+                    r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                     r.raise_for_status()
                     if r.ok :
                         res = r.json()
-                        if res['status']=='SUCCESS':
-                            success = True
-                            return [res['result']]
-                        else:
-                            time.sleep(2) # Check each 2 seconds
+                    else :
+                        raise ValueError(r.content)
+                url = f"{self.hostname}v2{res['track_link']}"
+                success = False
+                while not success:
+                    with requests.Session() as api:
+                        r = api.get(url)
+                        r.raise_for_status()
+                        if r.ok :
+                            res = r.json()
+                            if res['status']=='SUCCESS':
+                                success = True
+                                return [res['result']]
+                            else:
+                                time.sleep(1) # Check each 1 seconds
+            else:
+                with requests.Session() as req_session:
+                    r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*30)
+                    r.raise_for_status()
+                    if r.ok :
+                        response_back = r.json()
+                        return [response_back]
+                    else :
+                        raise ValueError(r.content)
 
-        except requests.exceptions.RequestException as e:
-            raise e
+        except requests.exceptions.RequestException as ex:
+            raise ex
 
