@@ -434,16 +434,17 @@ class Galaxy:
 
                     for geomtype in geometryType_filter:
                         geomtype_to_pass=[geomtype]
+                        formatted_file_name=f"""{self.file_name.lower()}_{t.name.lower()}_{geomtype.lower()}s_{output_format.lower()}"""
                         if osmTags: # if it is a master filter i.e. filter same for all type of feature
                             if columns:
-                                request_body={"fileName":f"""{self.file_name}-{t.name}-{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                                request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
                             else :
-                                request_body={"fileName":f"""{self.file_name}-{t.name}-{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                                request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
                         else:
                             if columns:
-                                request_body={"fileName":f"""{self.file_name}-{t.name}-{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                                request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
                             else :
-                                request_body={"fileName":f"""{self.file_name}-{t.name}-{geomtype}""","geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                                request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
                         # sending post request and saving response as response object
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
