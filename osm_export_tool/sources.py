@@ -417,6 +417,7 @@ class Galaxy:
 
         if self.mapping:
             if is_hdx_export:
+                #hdx block
                 fullresponse=[]
                 for t in self.mapping.themes:
                     point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.hdx_filters(t)
@@ -468,6 +469,8 @@ class Galaxy:
                                     r.raise_for_status()
                                     if r.ok :
                                         res = r.json()
+                                        if res['status']=='FAILURE':
+                                            raise ValueError("Task failed from export tool api")
                                         if res['status']=='SUCCESS':
                                             success = True
                                             response_back=res['result']
@@ -513,7 +516,8 @@ class Galaxy:
                     request_body['filters']={}
 
             with requests.Session() as req_session:
-                print(request_body)
+                print("printing before sending")
+                print(json.dumps(request_body))
                 r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                 r.raise_for_status()
                 if r.ok :
@@ -528,6 +532,8 @@ class Galaxy:
                     r.raise_for_status()
                     if r.ok :
                         res = r.json()
+                        if res['status']=='FAILURE':
+                            raise ValueError("Task failed from export tool api")
                         if res['status']=='SUCCESS':
                             success = True
                             return [res['result']]
