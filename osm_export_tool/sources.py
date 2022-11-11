@@ -496,26 +496,28 @@ class Galaxy:
                     columns=point_columns
                 else :
                     columns =[]
-        else:
-            geometryType_filter=[] # if nothing is provided we are getting all type of data back
 
-        if osmTags: # if it is a master filter i.e. filter same for all type of feature
-            if columns:
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
-            else :
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                if osmTags: # if it is a master filter i.e. filter same for all type of feature
+                    if columns:
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                    else :
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                else:
+                    if columns:
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                    else :
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+
+                if all_feature_filter_json:
+                    if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
+                        request_body['filters']={}
+
         else:
-            if columns:
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
-            else :
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+            request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format}
+
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         try:
-            if all_feature_filter_json:
-                if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
-                    request_body['filters']={}
-
             with requests.Session() as req_session:
                 print("printing before sending")
                 print(json.dumps(request_body))
