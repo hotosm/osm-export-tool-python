@@ -477,6 +477,7 @@ class Galaxy:
                                             response_back['theme'] = t.name
                                             response_back['output_name'] = output_format
                                             fullresponse.append(response_back)
+                                            time.sleep(0.5) # wait one half sec before making another request
                                         else:
                                             time.sleep(2) # Check every 2s for hdx
 
