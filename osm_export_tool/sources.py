@@ -455,6 +455,8 @@ class Galaxy:
                                         request_body['filters']={}
 
                             with requests.Session() as req_session:
+                                print("printing before sending")
+                                print(json.dumps(request_body))
                                 r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
                                 r.raise_for_status()
                                 if r.ok :
