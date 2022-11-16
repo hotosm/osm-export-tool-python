@@ -407,13 +407,7 @@ class Galaxy:
         if all_feature_filter_json:
             with open (all_feature_filter_json, encoding = 'utf-8') as all_features:
                 all_features_filters = json.loads(all_features.read())
-        if self.geom.geom_type == 'Polygon':
-            geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
-        elif self.geom.geom_type == 'MultiPolygon' and len(list(self.geom))==1: # if it is labed as multipolygon but has only one feature
-            geom=shapely.geometry.mapping(list(self.geom)[0])
-        else :
-            shapefile_polygon=shapely.geometry.box(*self.geom.bounds, ccw=True)
-            geom = shapely.geometry.mapping(shapefile_polygon)
+        geom=shapely.geometry.mapping(self.geom)
 
         if self.mapping:
             if is_hdx_export:
