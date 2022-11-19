@@ -397,11 +397,12 @@ class Galaxy:
         columns = theme.keys
         return list(columns)
 
-    def __init__(self,hostname,geom,mapping=None,file_name=""):
+    def __init__(self,hostname,geom,mapping=None,file_name="",country_export=False):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping
         self.file_name=file_name
+        self.country_export = country_export
 
     def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None):
         if all_feature_filter_json:
@@ -440,6 +441,11 @@ class Galaxy:
                                 request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
                             else :
                                 request_body={"fileName":formatted_file_name,"geometry":geom,"outputType":output_format,"geometryType":geomtype_to_pass,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                        if self.country_export:
+                            print("Mode: country_export")
+                            c_e = {"country_export":self.country_export}
+                            # appending the data
+                            request_body.update(c_e)
                         # sending post request and saving response as response object
                         headers = {'accept': "application/json","Content-Type": "application/json"}
                         # print(request_body)
