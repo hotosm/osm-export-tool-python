@@ -403,20 +403,15 @@ class Galaxy:
         self.mapping = mapping
         self.file_name=file_name
 
-    def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None,use_v2=False):
+    def fetch(self,output_format,is_hdx_export=False,all_feature_filter_json=None):
         if all_feature_filter_json:
             with open (all_feature_filter_json, encoding = 'utf-8') as all_features:
                 all_features_filters = json.loads(all_features.read())
-        if self.geom.geom_type == 'Polygon':
-            geom=shapely.geometry.mapping(self.geom) # converting geom to geojson
-        elif self.geom.geom_type == 'MultiPolygon' and len(list(self.geom))==1: # if it is labed as multipolygon but has only one feature
-            geom=shapely.geometry.mapping(list(self.geom)[0])
-        else :
-            shapefile_polygon=shapely.geometry.box(*self.geom.bounds, ccw=True)
-            geom = shapely.geometry.mapping(shapefile_polygon)
+        geom=shapely.geometry.mapping(self.geom)
 
         if self.mapping:
             if is_hdx_export:
+                #hdx block
                 fullresponse=[]
                 for t in self.mapping.themes:
                     point_filter,line_filter,poly_filter,geometryType_filter,point_columns,line_columns,poly_columns = Galaxy.hdx_filters(t)
@@ -452,42 +447,36 @@ class Galaxy:
                             if all_feature_filter_json:
                                     if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
                                         request_body['filters']={}
-                            if use_v2 :
-                                with requests.Session() as req_session:
-                                    r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
+
+                            with requests.Session() as req_session:
+                                print("printing before sending")
+                                print(json.dumps(request_body))
+                                r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
+                                r.raise_for_status()
+                                if r.ok :
+                                    res = r.json()
+                                else :
+                                    raise ValueError(r.content)
+                            url = f"{self.hostname}v1{res['track_link']}"
+                            success = False
+                            while not success:
+                                with requests.Session() as api:
+                                    r = api.get(url)
                                     r.raise_for_status()
                                     if r.ok :
                                         res = r.json()
-                                    else :
-                                        raise ValueError(r.content)
-                                url = f"{self.hostname}v2{res['track_link']}"
-                                success = False
-                                while not success:
-                                    with requests.Session() as api:
-                                        r = api.get(url)
-                                        r.raise_for_status()
-                                        if r.ok :
-                                            res = r.json()
-                                            if res['status']=='SUCCESS':
-                                                success = True
-                                                response_back=res['result']
-                                                response_back['theme'] = t.name
-                                                response_back['output_name'] = output_format
-                                                fullresponse.append(response_back)
-                                            else:
-                                                time.sleep(2) # Check every 2s for hdx
-                            else:
-                                with requests.Session() as req_session:
-                                    r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*30)
-                                    r.raise_for_status()
-                                    if r.ok :
-                                        response_back = r.json()
-                                        response_back['theme'] = t.name
-                                        response_back['output_name'] = output_format
-                                        # print(response_back)
-                                        fullresponse.append(response_back)
-                                    else :
-                                        raise ValueError(r.content)
+                                        if res['status']=='FAILURE':
+                                            raise ValueError("Task failed from export tool api")
+                                        if res['status']=='SUCCESS':
+                                            success = True
+                                            response_back=res['result']
+                                            response_back['theme'] = t.name
+                                            response_back['output_name'] = output_format
+                                            fullresponse.append(response_back)
+                                            time.sleep(0.5) # wait one half sec before making another request
+                                        else:
+                                            time.sleep(2) # Check every 2s for hdx
+
                         except requests.exceptions.RequestException as ex:
                             raise ex
 
@@ -503,58 +492,52 @@ class Galaxy:
                     columns=point_columns
                 else :
                     columns =[]
-        else:
-            geometryType_filter=[] # if nothing is provided we are getting all type of data back
 
-        if osmTags: # if it is a master filter i.e. filter same for all type of feature
-            if columns:
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
-            else :
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                if osmTags: # if it is a master filter i.e. filter same for all type of feature
+                    if columns:
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"all_geometry":columns}}}
+                    else :
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"osmTags":osmTags,"filters":{"tags":{"all_geometry":osmTags},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+                else:
+                    if columns:
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
+                    else :
+                        request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+
+                if all_feature_filter_json:
+                    if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
+                        request_body['filters']={}
+
         else:
-            if columns:
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"all_geometry":columns}}}
-            else :
-                request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format,"geometryType":geometryType_filter,"filters":{"tags":{"point":point_filter,"line":line_filter,"polygon":poly_filter},"attributes":{"point":point_columns,"line":line_columns,"polygon":poly_columns}}}
+            request_body={"fileName":self.file_name,"geometry":geom,"outputType":output_format}
+
         headers = {'accept': "application/json","Content-Type": "application/json"}
         # print(request_body)
         try:
-            if all_feature_filter_json:
-                if len(DeepDiff(request_body['filters'],all_features_filters, ignore_order=True))<1: # that means user is selecting all the options available on export tool
-                    request_body['filters']={}
-            if use_v2:
-                with requests.Session() as req_session:
-                    print(request_body)
-                    r=req_session.post(url = f"{self.hostname}v2/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
+            with requests.Session() as req_session:
+                print("printing before sending")
+                print(json.dumps(request_body))
+                r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*5)
+                r.raise_for_status()
+                if r.ok :
+                    res = r.json()
+                else :
+                    raise ValueError(r.content)
+            url = f"{self.hostname}v1{res['track_link']}"
+            success = False
+            while not success:
+                with requests.Session() as api:
+                    r = api.get(url)
                     r.raise_for_status()
                     if r.ok :
                         res = r.json()
-                    else :
-                        raise ValueError(r.content)
-                url = f"{self.hostname}v2{res['track_link']}"
-                success = False
-                while not success:
-                    with requests.Session() as api:
-                        r = api.get(url)
-                        r.raise_for_status()
-                        if r.ok :
-                            res = r.json()
-                            if res['status']=='SUCCESS':
-                                success = True
-                                return [res['result']]
-                            else:
-                                time.sleep(1) # Check each 1 seconds
-            else:
-                with requests.Session() as req_session:
-                    print(request_body)
-                    r=req_session.post(url = f"{self.hostname}v1/raw-data/current-snapshot/", data = json.dumps(request_body) ,headers=headers,timeout=60*30)
-                    r.raise_for_status()
-                    if r.ok :
-                        response_back = r.json()
-                        print(response_back)
-                        return [response_back]
-                    else :
-                        raise ValueError(r.content)
+                        if res['status']=='FAILURE':
+                            raise ValueError("Task failed from export tool api")
+                        if res['status']=='SUCCESS':
+                            success = True
+                            return [res['result']]
+                        else:
+                            time.sleep(1) # Check each 1 seconds
 
         except requests.exceptions.RequestException as ex:
             raise ex
