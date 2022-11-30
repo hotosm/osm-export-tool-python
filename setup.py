@@ -8,12 +8,12 @@ requirements = [
     'pyparsing~=2.4',
     'pyyaml',
     'shapely~=1.6',
-    'requests~=2.22.0',
+    'requests>=2.22.0',
     'landez~=2.5.0'
 ]
 
 setuptools.setup(
-    name="osm-export-tool",
+    name="osm-export-tool-python",
     version="2.0.2",
     author="Hot Tech Team",
     author_email="sysadmin@hotosm.org",
