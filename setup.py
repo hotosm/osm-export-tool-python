@@ -1,6 +1,4 @@
 import setuptools
-import subprocess
-import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -10,15 +8,15 @@ requirements = [
     'pyparsing~=2.4',
     'pyyaml',
     'shapely~=1.6',
-    'requests~=2.26.0',
+    'requests~=2.22.0',
     'landez~=2.5.0'
 ]
 
 setuptools.setup(
     name="osm-export-tool",
-    version="0.0.29",
-    author="Brandon Liu",
-    author_email="brandon.liu@hotosm.org",
+    version="2.0.2",
+    author="Hot Tech Team",
+    author_email="sysadmin@hotosm.org",
     description="Convert OpenStreetMap data into GIS and mobile mapping file formats.",
     license="BSD-3-Clause",
     long_description=long_description,
@@ -35,3 +33,6 @@ setuptools.setup(
     requires_python='>=3.0',
     package_data={'osm_export_tool':['mappings/*.yml']}
 )
+
+
+
