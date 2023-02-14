@@ -345,6 +345,8 @@ class Galaxy:
         if t.points:
             point_columns = cls.attribute_filter(t)
             geometryType.append("point")
+            print("Printing parts \n")
+            print(parts)
             for part in parts:
                 part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
                 for key, value in part_dict.items():
@@ -415,7 +417,14 @@ class Galaxy:
 
         for t in mapping.themes:
 
-            parts = cls.parts(t.matcher.expr)
+            parts, and_clause = cls.parts(t.matcher.expr)
+            print("Printing parts \n")
+            print(parts)
+            print("Printing and clause \n")
+            print(and_clause)
+            # for cl in and_clause:
+            #     cl['destroyed:building'] 
+    
             if t.points:
                 point_columns = cls.attribute_filter(t)
                 geometryType.append("point")
@@ -489,14 +498,14 @@ class Galaxy:
 
     # force quoting of strings to handle keys with colons
     @classmethod
-    def parts(cls, expr):
+    def parts(cls, expr , and_clause = []):
         def _parts(prefix):
             op = prefix[0]
             if op == "=":
                 return [""" "{0}":["{1}"] """.format(prefix[1], prefix[2])]
             if (
                 op == "!="
-            ):  # fixme this will require improvement in galaxy api is not implemented yet
+            ):  # fixme this will require improvement in rawdata api is not implemented yet
                 pass
                 # return ["['{0}'!='{1}']".format(prefix[1],prefix[2])]
             if op in ["<", ">", "<=", ">="] or op == "notnull":
@@ -504,10 +513,13 @@ class Galaxy:
             if op == "in":
                 x = """ "{0}":["{1}"]""".format(prefix[1], """ "," """.join(prefix[2]))
                 return [x]
-            if op == "and" or op == "or":
+            if op == "and":
+                print({"join_and":_parts(prefix[1]) + _parts(prefix[2])})
+                and_clause.append({"join_and":_parts(prefix[1]) + _parts(prefix[2])})
                 return _parts(prefix[1]) + _parts(prefix[2])
-
-        return _parts(expr)
+            if op == "or":
+                return _parts(prefix[1]) + _parts(prefix[2])
+        return _parts(expr) , and_clause
 
     @classmethod
     def attribute_filter(cls, theme):
