@@ -16,6 +16,8 @@ from requests.exceptions import Timeout
 from osm_export_tool.sql import to_prefix
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
+MAX_RETRIES = 5
+RETRY_DELAY = 60
 
 
 class Pbf:
@@ -339,43 +341,47 @@ class Galaxy:
     @classmethod
     def hdx_filters(cls, t):
         geometryType = []
-        or_filter,and_filter, point_filter,line_filter, poly_filter = {}, {}, {}, {},{}
+        or_filter, and_filter, point_filter, line_filter, poly_filter = (
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
         point_columns, line_columns, poly_columns = [], [], []
 
         parts, and_clause = cls.parts(t.matcher.expr)
-        if len(and_clause)>0:
-            ### FIX ME to support and clause with multiple condition 
-                temp_and_clause = []
-                for clause in and_clause:
-                    for ause in clause : 
-                        temp_and_clause.append(ause)
-                
-                and_clause=temp_and_clause
-                for cl in and_clause:
-                    if cl in parts:
-                        parts.remove(cl)
-                # -----
-                and_filter= cls.remove_duplicates(cls.where_filter(temp_and_clause,and_filter))
+        if len(and_clause) > 0:
+            ### FIX ME to support and clause with multiple condition
+            temp_and_clause = []
+            for clause in and_clause:
+                for ause in clause:
+                    temp_and_clause.append(ause)
 
-        or_filter =cls.remove_duplicates(cls.where_filter(parts,or_filter))
+            and_clause = temp_and_clause
+            for cl in and_clause:
+                if cl in parts:
+                    parts.remove(cl)
+            # -----
+            and_filter = cls.remove_duplicates(
+                cls.where_filter(temp_and_clause, and_filter)
+            )
+
+        or_filter = cls.remove_duplicates(cls.where_filter(parts, or_filter))
         if t.points:
             point_columns = cls.attribute_filter(t)
             geometryType.append("point")
-            point_filter={"join_or":or_filter,"join_and":and_filter}
+            point_filter = {"join_or": or_filter, "join_and": and_filter}
 
         if t.lines:
             line_columns = cls.attribute_filter(t)
-            geometryType.append(
-                "line"
-            )  
-            line_filter={"join_or":or_filter,"join_and":and_filter}
+            geometryType.append("line")
+            line_filter = {"join_or": or_filter, "join_and": and_filter}
 
         if t.polygons:
             poly_columns = cls.attribute_filter(t)
-            geometryType.append(
-                "polygon"
-            )
-            poly_filter={"join_or":or_filter,"join_and":and_filter}
+            geometryType.append("polygon")
+            poly_filter = {"join_or": or_filter, "join_and": and_filter}
 
         return (
             point_filter,
@@ -390,47 +396,50 @@ class Galaxy:
     @classmethod
     def filters(cls, mapping):
         geometryType = []
-        or_filter,and_filter, point_filter,line_filter, poly_filter = {}, {}, {}, {},{}
+        or_filter, and_filter, point_filter, line_filter, poly_filter = (
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
         point_columns, line_columns, poly_columns = [], [], []
-
 
         for t in mapping.themes:
             parts, and_clause = cls.parts(t.matcher.expr)
 
-            if len(and_clause)>0:
-            ### FIX ME to support and clause with multiple condition 
+            if len(and_clause) > 0:
+                ### FIX ME to support and clause with multiple condition
                 temp_and_clause = []
                 for clause in and_clause:
-                    for ause in clause : 
+                    for ause in clause:
                         temp_and_clause.append(ause)
-                
-                and_clause=temp_and_clause
+
+                and_clause = temp_and_clause
                 for cl in and_clause:
                     if cl in parts:
                         parts.remove(cl)
                 # -----
-                and_filter= cls.remove_duplicates(cls.where_filter(temp_and_clause,and_filter))
+                and_filter = cls.remove_duplicates(
+                    cls.where_filter(temp_and_clause, and_filter)
+                )
 
-            or_filter =cls.remove_duplicates(cls.where_filter(parts,or_filter))
+            or_filter = cls.remove_duplicates(cls.where_filter(parts, or_filter))
 
             if t.points:
                 point_columns = cls.attribute_filter(t)
                 geometryType.append("point")
-                point_filter={"join_or":or_filter,"join_and":and_filter}
+                point_filter = {"join_or": or_filter, "join_and": and_filter}
 
             if t.lines:
                 line_columns = cls.attribute_filter(t)
-                geometryType.append(
-                    "line"
-                )  
-                line_filter={"join_or":or_filter,"join_and":and_filter}
+                geometryType.append("line")
+                line_filter = {"join_or": or_filter, "join_and": and_filter}
 
             if t.polygons:
                 poly_columns = cls.attribute_filter(t)
-                geometryType.append(
-                    "polygon"
-                )
-                poly_filter={"join_or":or_filter,"join_and":and_filter}
+                geometryType.append("polygon")
+                poly_filter = {"join_or": or_filter, "join_and": and_filter}
 
         return (
             point_filter,
@@ -479,7 +488,7 @@ class Galaxy:
         return list(columns)
 
     @classmethod
-    def where_filter(cls,parts,filter_dict):
+    def where_filter(cls, parts, filter_dict):
         for part in parts:
             part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
             for key, value in part_dict.items():
@@ -497,7 +506,7 @@ class Galaxy:
                             filter_dict[
                                 key
                             ] += value  # if value was not previously = * then and value is not =* then add values
-            
+
         return filter_dict
 
     def __init__(
@@ -635,15 +644,25 @@ class Galaxy:
                                     request_body["filters"] = {}
 
                             with requests.Session() as req_session:
-                                print("printing before sending")
-                                print(json.dumps(request_body))
-                                r = req_session.post(
-                                    url=f"{self.hostname}v1/snapshot/",
-                                    data=json.dumps(request_body),
-                                    headers=headers,
-                                    timeout=60 * 5,
-                                )
-                                r.raise_for_status()
+                                # print("printing before sending")
+                                # print(json.dumps(request_body))
+                                for retry in range(MAX_RETRIES):
+                                    r = req_session.post(
+                                        url=f"{self.hostname}v1/snapshot/",
+                                        data=json.dumps(request_body),
+                                        headers=headers,
+                                        timeout=60 * 5,
+                                    )
+
+                                    if r.status_code == 429:  # Rate limited
+                                        print(
+                                            f"Rate limited, retrying in {RETRY_DELAY} seconds..."
+                                        )
+                                        time.sleep(RETRY_DELAY)
+                                    elif r.status_code != 200:  # Unexpected status code
+                                        r.raise_for_status()
+                                    else:  # Success
+                                        break
                                 if r.ok:
                                     res = r.json()
                                 else:
@@ -786,15 +805,26 @@ class Galaxy:
         # print(request_body)
         try:
             with requests.Session() as req_session:
-                print("printing before sending")
-                print(json.dumps(request_body))
-                r = req_session.post(
-                    url=f"{self.hostname}v1/snapshot/",
-                    data=json.dumps(request_body),
-                    headers=headers,
-                    timeout=60 * 5,
-                )
-                r.raise_for_status()
+                # print("printing before sending")
+                # print(json.dumps(request_body))
+                for retry in range(MAX_RETRIES):
+                    r = req_session.post(
+                        url=f"{self.hostname}v1/snapshot/",
+                        data=json.dumps(request_body),
+                        headers=headers,
+                        timeout=60 * 5,
+                    )
+
+                    if r.status_code == 429:  # Rate limited
+                        print(f"Rate limited, retrying in {RETRY_DELAY} seconds...")
+                        time.sleep(RETRY_DELAY)
+                    elif r.status_code != 200:  # Unexpected status code
+                        r.raise_for_status()
+                    else:  # Success
+                        break
+                else:
+                    # Max retries reached, raise an error
+                    raise Exception("Failed to make request after max retries")
                 if r.ok:
                     res = r.json()
                 else:
