@@ -16,6 +16,8 @@ from requests.exceptions import Timeout
 from osm_export_tool.sql import to_prefix
 
 # path must return a path to an .osm.pbf or .osm.xml on the filesystem
+MAX_RETRIES = 5
+RETRY_DELAY = 60
 
 
 class Pbf:
@@ -339,64 +341,48 @@ class Galaxy:
     @classmethod
     def hdx_filters(cls, t):
         geometryType = []
-        point_filter, line_filter, poly_filter = {}, {}, {}
+        or_filter, and_filter, point_filter, line_filter, poly_filter = (
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
         point_columns, line_columns, poly_columns = [], [], []
-        parts = cls.parts(t.matcher.expr)
+
+        parts, and_clause = cls.parts(t.matcher.expr)
+        if len(and_clause) > 0:
+            ### FIX ME to support and clause with multiple condition
+            temp_and_clause = []
+            for clause in and_clause:
+                for ause in clause:
+                    temp_and_clause.append(ause)
+
+            and_clause = temp_and_clause
+            for cl in and_clause:
+                if cl in parts:
+                    parts.remove(cl)
+            # -----
+            and_filter = cls.remove_duplicates(
+                cls.where_filter(temp_and_clause, and_filter)
+            )
+
+        or_filter = cls.remove_duplicates(cls.where_filter(parts, or_filter))
         if t.points:
             point_columns = cls.attribute_filter(t)
             geometryType.append("point")
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in point_filter:
-                        point_filter[key] = value
-                    else:
-                        point_filter[
-                            key
-                        ] += value  # dictionary already have that key defined update and add the value
-        if t.lines:
-            ways_select_filter = cls.attribute_filter(t)
-            line_columns = cls.attribute_filter(t)
+            point_filter = {"join_or": or_filter, "join_and": and_filter}
 
-            geometryType.append(
-                "line"
-            )  # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in line_filter:
-                        line_filter[key] = value
-                    else:
-                        line_filter[key] += value
+        if t.lines:
+            line_columns = cls.attribute_filter(t)
+            geometryType.append("line")
+            line_filter = {"join_or": or_filter, "join_and": and_filter}
+
         if t.polygons:
             poly_columns = cls.attribute_filter(t)
-            geometryType.append(
-                "polygon"
-            )  # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in poly_filter:
-                        poly_filter[key] = value
-                    else:
-                        if (
-                            poly_filter.get(key) != []
-                        ):  # only add other values if not null condition is not applied to that key
-                            if (
-                                value == []
-                            ):  # if incoming value is not null i.e. key = * ignore previously added values
-                                poly_filter[key] = value
-                            else:
-                                poly_filter[
-                                    key
-                                ] += value  # if value was not previously = * then and value is not =* then add values
+            geometryType.append("polygon")
+            poly_filter = {"join_or": or_filter, "join_and": and_filter}
 
-        if point_filter:
-            point_filter = cls.remove_duplicates(point_filter)
-        if line_filter:
-            line_filter = cls.remove_duplicates(line_filter)
-        if poly_filter:
-            poly_filter = cls.remove_duplicates(poly_filter)
         return (
             point_filter,
             line_filter,
@@ -410,67 +396,51 @@ class Galaxy:
     @classmethod
     def filters(cls, mapping):
         geometryType = []
-        point_filter, line_filter, poly_filter = {}, {}, {}
+        or_filter, and_filter, point_filter, line_filter, poly_filter = (
+            {},
+            {},
+            {},
+            {},
+            {},
+        )
         point_columns, line_columns, poly_columns = [], [], []
 
         for t in mapping.themes:
+            parts, and_clause = cls.parts(t.matcher.expr)
 
-            parts = cls.parts(t.matcher.expr)
+            if len(and_clause) > 0:
+                ### FIX ME to support and clause with multiple condition
+                temp_and_clause = []
+                for clause in and_clause:
+                    for ause in clause:
+                        temp_and_clause.append(ause)
+
+                and_clause = temp_and_clause
+                for cl in and_clause:
+                    if cl in parts:
+                        parts.remove(cl)
+                # -----
+                and_filter = cls.remove_duplicates(
+                    cls.where_filter(temp_and_clause, and_filter)
+                )
+
+            or_filter = cls.remove_duplicates(cls.where_filter(parts, or_filter))
+
             if t.points:
                 point_columns = cls.attribute_filter(t)
                 geometryType.append("point")
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in point_filter:
-                            point_filter[key] = value
-                        else:
-                            point_filter[
-                                key
-                            ] += value  # dictionary already have that key defined update and add the value
-            if t.lines:
-                ways_select_filter = cls.attribute_filter(t)
-                line_columns = cls.attribute_filter(t)
+                point_filter = {"join_or": or_filter, "join_and": and_filter}
 
-                geometryType.append(
-                    "line"
-                )  # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in line_filter:
-                            line_filter[key] = value
-                        else:
-                            line_filter[key] += value
+            if t.lines:
+                line_columns = cls.attribute_filter(t)
+                geometryType.append("line")
+                line_filter = {"join_or": or_filter, "join_and": and_filter}
+
             if t.polygons:
                 poly_columns = cls.attribute_filter(t)
-                geometryType.append(
-                    "polygon"
-                )  # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in poly_filter:
-                            poly_filter[key] = value
-                        else:
-                            if (
-                                poly_filter.get(key) != []
-                            ):  # only add other values if not null condition is not applied to that key
-                                if (
-                                    value == []
-                                ):  # if incoming value is not null i.e. key = * ignore previously added values
-                                    poly_filter[key] = value
-                                else:
-                                    poly_filter[
-                                        key
-                                    ] += value  # if value was not previously = * then and value is not =* then add values
+                geometryType.append("polygon")
+                poly_filter = {"join_or": or_filter, "join_and": and_filter}
 
-        if point_filter:
-            point_filter = cls.remove_duplicates(point_filter)
-        if line_filter:
-            line_filter = cls.remove_duplicates(line_filter)
-        if poly_filter:
-            poly_filter = cls.remove_duplicates(poly_filter)
         return (
             point_filter,
             line_filter,
@@ -489,14 +459,14 @@ class Galaxy:
 
     # force quoting of strings to handle keys with colons
     @classmethod
-    def parts(cls, expr):
+    def parts(cls, expr, and_clause=[]):
         def _parts(prefix):
             op = prefix[0]
             if op == "=":
                 return [""" "{0}":["{1}"] """.format(prefix[1], prefix[2])]
             if (
                 op == "!="
-            ):  # fixme this will require improvement in galaxy api is not implemented yet
+            ):  # fixme this will require improvement in rawdata api is not implemented yet
                 pass
                 # return ["['{0}'!='{1}']".format(prefix[1],prefix[2])]
             if op in ["<", ">", "<=", ">="] or op == "notnull":
@@ -504,15 +474,40 @@ class Galaxy:
             if op == "in":
                 x = """ "{0}":["{1}"]""".format(prefix[1], """ "," """.join(prefix[2]))
                 return [x]
-            if op == "and" or op == "or":
+            if op == "and":
+                and_clause.append(_parts(prefix[1]) + _parts(prefix[2]))
+                return _parts(prefix[1]) + _parts(prefix[2])
+            if op == "or":
                 return _parts(prefix[1]) + _parts(prefix[2])
 
-        return _parts(expr)
+        return _parts(expr), and_clause
 
     @classmethod
     def attribute_filter(cls, theme):
         columns = theme.keys
         return list(columns)
+
+    @classmethod
+    def where_filter(cls, parts, filter_dict):
+        for part in parts:
+            part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
+            for key, value in part_dict.items():
+                if key not in filter_dict:
+                    filter_dict[key] = value
+                else:
+                    if (
+                        filter_dict.get(key) != []
+                    ):  # only add other values if not null condition is not applied to that key
+                        if (
+                            value == []
+                        ):  # if incoming value is not null i.e. key = * ignore previously added values
+                            filter_dict[key] = value
+                        else:
+                            filter_dict[
+                                key
+                            ] += value  # if value was not previously = * then and value is not =* then add values
+
+        return filter_dict
 
     def __init__(
         self, hostname, geom, mapping=None, file_name="", country_export=False
@@ -649,15 +644,25 @@ class Galaxy:
                                     request_body["filters"] = {}
 
                             with requests.Session() as req_session:
-                                print("printing before sending")
-                                print(json.dumps(request_body))
-                                r = req_session.post(
-                                    url=f"{self.hostname}v1/snapshot/",
-                                    data=json.dumps(request_body),
-                                    headers=headers,
-                                    timeout=60 * 5,
-                                )
-                                r.raise_for_status()
+                                # print("printing before sending")
+                                # print(json.dumps(request_body))
+                                for retry in range(MAX_RETRIES):
+                                    r = req_session.post(
+                                        url=f"{self.hostname}v1/snapshot/",
+                                        data=json.dumps(request_body),
+                                        headers=headers,
+                                        timeout=60 * 5,
+                                    )
+
+                                    if r.status_code == 429:  # Rate limited
+                                        print(
+                                            f"Rate limited, retrying in {RETRY_DELAY} seconds..."
+                                        )
+                                        time.sleep(RETRY_DELAY)
+                                    elif r.status_code != 200:  # Unexpected status code
+                                        r.raise_for_status()
+                                    else:  # Success
+                                        break
                                 if r.ok:
                                     res = r.json()
                                 else:
@@ -800,15 +805,23 @@ class Galaxy:
         # print(request_body)
         try:
             with requests.Session() as req_session:
-                print("printing before sending")
-                print(json.dumps(request_body))
-                r = req_session.post(
-                    url=f"{self.hostname}v1/snapshot/",
-                    data=json.dumps(request_body),
-                    headers=headers,
-                    timeout=60 * 5,
-                )
-                r.raise_for_status()
+                # print("printing before sending")
+                # print(json.dumps(request_body))
+                for retry in range(MAX_RETRIES):
+                    r = req_session.post(
+                        url=f"{self.hostname}v1/snapshot/",
+                        data=json.dumps(request_body),
+                        headers=headers,
+                        timeout=60 * 5,
+                    )
+
+                    if r.status_code == 429:  # Rate limited
+                        print(f"Rate limited, retrying in {RETRY_DELAY} seconds...")
+                        time.sleep(RETRY_DELAY)
+                    elif r.status_code != 200:  # Unexpected status code
+                        r.raise_for_status()
+                    else:  # Success
+                        break
                 if r.ok:
                     res = r.json()
                 else:
