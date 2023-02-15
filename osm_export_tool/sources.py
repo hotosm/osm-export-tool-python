@@ -423,8 +423,8 @@ class Galaxy:
             print("Printing and clause \n")
             print(and_clause)
             # for cl in and_clause:
-            #     cl['destroyed:building'] 
-    
+            #     cl['destroyed:building']
+
             if t.points:
                 point_columns = cls.attribute_filter(t)
                 geometryType.append("point")
@@ -498,7 +498,7 @@ class Galaxy:
 
     # force quoting of strings to handle keys with colons
     @classmethod
-    def parts(cls, expr , and_clause = []):
+    def parts(cls, expr, and_clause=[]):
         def _parts(prefix):
             op = prefix[0]
             if op == "=":
@@ -514,12 +514,13 @@ class Galaxy:
                 x = """ "{0}":["{1}"]""".format(prefix[1], """ "," """.join(prefix[2]))
                 return [x]
             if op == "and":
-                print({"join_and":_parts(prefix[1]) + _parts(prefix[2])})
-                and_clause.append({"join_and":_parts(prefix[1]) + _parts(prefix[2])})
+                print({"join_and": _parts(prefix[1]) + _parts(prefix[2])})
+                and_clause.append({"join_and": _parts(prefix[1]) + _parts(prefix[2])})
                 return _parts(prefix[1]) + _parts(prefix[2])
             if op == "or":
                 return _parts(prefix[1]) + _parts(prefix[2])
-        return _parts(expr) , and_clause
+
+        return _parts(expr), and_clause
 
     @classmethod
     def attribute_filter(cls, theme):
