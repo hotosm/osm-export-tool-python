@@ -822,9 +822,6 @@ class Galaxy:
                         r.raise_for_status()
                     else:  # Success
                         break
-                else:
-                    # Max retries reached, raise an error
-                    raise Exception("Failed to make request after max retries")
                 if r.ok:
                     res = r.json()
                 else:
