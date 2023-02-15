@@ -339,66 +339,44 @@ class Galaxy:
     @classmethod
     def hdx_filters(cls, t):
         geometryType = []
-        point_filter, line_filter, poly_filter = {}, {}, {}
+        or_filter,and_filter, point_filter,line_filter, poly_filter = {}, {}, {}, {},{}
         point_columns, line_columns, poly_columns = [], [], []
-        parts = cls.parts(t.matcher.expr)
+
+        parts, and_clause = cls.parts(t.matcher.expr)
+        if len(and_clause)>0:
+            ### FIX ME to support and clause with multiple condition 
+                temp_and_clause = []
+                for clause in and_clause:
+                    for ause in clause : 
+                        temp_and_clause.append(ause)
+                
+                and_clause=temp_and_clause
+                for cl in and_clause:
+                    if cl in parts:
+                        parts.remove(cl)
+                # -----
+                and_filter= cls.remove_duplicates(cls.where_filter(temp_and_clause,and_filter))
+
+        or_filter =cls.remove_duplicates(cls.where_filter(parts,or_filter))
         if t.points:
             point_columns = cls.attribute_filter(t)
             geometryType.append("point")
-            print("Printing parts \n")
-            print(parts)
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in point_filter:
-                        point_filter[key] = value
-                    else:
-                        point_filter[
-                            key
-                        ] += value  # dictionary already have that key defined update and add the value
-        if t.lines:
-            ways_select_filter = cls.attribute_filter(t)
-            line_columns = cls.attribute_filter(t)
+            point_filter={"join_or":or_filter,"join_and":and_filter}
 
+        if t.lines:
+            line_columns = cls.attribute_filter(t)
             geometryType.append(
                 "line"
-            )  # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in line_filter:
-                        line_filter[key] = value
-                    else:
-                        line_filter[key] += value
+            )  
+            line_filter={"join_or":or_filter,"join_and":and_filter}
+
         if t.polygons:
             poly_columns = cls.attribute_filter(t)
             geometryType.append(
                 "polygon"
-            )  # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
-            for part in parts:
-                part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                for key, value in part_dict.items():
-                    if key not in poly_filter:
-                        poly_filter[key] = value
-                    else:
-                        if (
-                            poly_filter.get(key) != []
-                        ):  # only add other values if not null condition is not applied to that key
-                            if (
-                                value == []
-                            ):  # if incoming value is not null i.e. key = * ignore previously added values
-                                poly_filter[key] = value
-                            else:
-                                poly_filter[
-                                    key
-                                ] += value  # if value was not previously = * then and value is not =* then add values
+            )
+            poly_filter={"join_or":or_filter,"join_and":and_filter}
 
-        if point_filter:
-            point_filter = cls.remove_duplicates(point_filter)
-        if line_filter:
-            line_filter = cls.remove_duplicates(line_filter)
-        if poly_filter:
-            poly_filter = cls.remove_duplicates(poly_filter)
         return (
             point_filter,
             line_filter,
@@ -412,74 +390,48 @@ class Galaxy:
     @classmethod
     def filters(cls, mapping):
         geometryType = []
-        point_filter, line_filter, poly_filter = {}, {}, {}
+        or_filter,and_filter, point_filter,line_filter, poly_filter = {}, {}, {}, {},{}
         point_columns, line_columns, poly_columns = [], [], []
 
-        for t in mapping.themes:
 
+        for t in mapping.themes:
             parts, and_clause = cls.parts(t.matcher.expr)
-            print("Printing parts \n")
-            print(parts)
-            print("Printing and clause \n")
-            print(and_clause)
-            # for cl in and_clause:
-            #     cl['destroyed:building']
+
+            if len(and_clause)>0:
+            ### FIX ME to support and clause with multiple condition 
+                temp_and_clause = []
+                for clause in and_clause:
+                    for ause in clause : 
+                        temp_and_clause.append(ause)
+                
+                and_clause=temp_and_clause
+                for cl in and_clause:
+                    if cl in parts:
+                        parts.remove(cl)
+                # -----
+                and_filter= cls.remove_duplicates(cls.where_filter(temp_and_clause,and_filter))
+
+            or_filter =cls.remove_duplicates(cls.where_filter(parts,or_filter))
 
             if t.points:
                 point_columns = cls.attribute_filter(t)
                 geometryType.append("point")
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in point_filter:
-                            point_filter[key] = value
-                        else:
-                            point_filter[
-                                key
-                            ] += value  # dictionary already have that key defined update and add the value
-            if t.lines:
-                ways_select_filter = cls.attribute_filter(t)
-                line_columns = cls.attribute_filter(t)
+                point_filter={"join_or":or_filter,"join_and":and_filter}
 
+            if t.lines:
+                line_columns = cls.attribute_filter(t)
                 geometryType.append(
                     "line"
-                )  # Galaxy supports both linestring and multilinestring, getting them both since export tool only has line but with galaxy it will also deliver multilinestring features
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in line_filter:
-                            line_filter[key] = value
-                        else:
-                            line_filter[key] += value
+                )  
+                line_filter={"join_or":or_filter,"join_and":and_filter}
+
             if t.polygons:
                 poly_columns = cls.attribute_filter(t)
                 geometryType.append(
                     "polygon"
-                )  # Galaxy also supports multipolygon and polygon , passing them both since export tool has only polygon supported
-                for part in parts:
-                    part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
-                    for key, value in part_dict.items():
-                        if key not in poly_filter:
-                            poly_filter[key] = value
-                        else:
-                            if (
-                                poly_filter.get(key) != []
-                            ):  # only add other values if not null condition is not applied to that key
-                                if (
-                                    value == []
-                                ):  # if incoming value is not null i.e. key = * ignore previously added values
-                                    poly_filter[key] = value
-                                else:
-                                    poly_filter[
-                                        key
-                                    ] += value  # if value was not previously = * then and value is not =* then add values
+                )
+                poly_filter={"join_or":or_filter,"join_and":and_filter}
 
-        if point_filter:
-            point_filter = cls.remove_duplicates(point_filter)
-        if line_filter:
-            line_filter = cls.remove_duplicates(line_filter)
-        if poly_filter:
-            poly_filter = cls.remove_duplicates(poly_filter)
         return (
             point_filter,
             line_filter,
@@ -514,8 +466,7 @@ class Galaxy:
                 x = """ "{0}":["{1}"]""".format(prefix[1], """ "," """.join(prefix[2]))
                 return [x]
             if op == "and":
-                print({"join_and": _parts(prefix[1]) + _parts(prefix[2])})
-                and_clause.append({"join_and": _parts(prefix[1]) + _parts(prefix[2])})
+                and_clause.append(_parts(prefix[1]) + _parts(prefix[2]))
                 return _parts(prefix[1]) + _parts(prefix[2])
             if op == "or":
                 return _parts(prefix[1]) + _parts(prefix[2])
@@ -526,6 +477,28 @@ class Galaxy:
     def attribute_filter(cls, theme):
         columns = theme.keys
         return list(columns)
+
+    @classmethod
+    def where_filter(cls,parts,filter_dict):
+        for part in parts:
+            part_dict = json.loads(f"""{'{'}{part.strip()}{'}'}""")
+            for key, value in part_dict.items():
+                if key not in filter_dict:
+                    filter_dict[key] = value
+                else:
+                    if (
+                        filter_dict.get(key) != []
+                    ):  # only add other values if not null condition is not applied to that key
+                        if (
+                            value == []
+                        ):  # if incoming value is not null i.e. key = * ignore previously added values
+                            filter_dict[key] = value
+                        else:
+                            filter_dict[
+                                key
+                            ] += value  # if value was not previously = * then and value is not =* then add values
+            
+        return filter_dict
 
     def __init__(
         self, hostname, geom, mapping=None, file_name="", country_export=False
