@@ -573,7 +573,6 @@ class Galaxy:
                                     "geometry": geom,
                                     "outputType": output_format,
                                     "geometryType": geomtype_to_pass,
-                                    "osmTags": osmTags,
                                     "filters": {
                                         "tags": {"all_geometry": osmTags},
                                         "attributes": {
@@ -718,33 +717,27 @@ class Galaxy:
                 if (
                     osmTags
                 ):  # if it is a master filter i.e. filter same for all type of feature
-                    if columns:
-                        request_body = {
-                            "fileName": self.file_name,
-                            "geometry": geom,
-                            "outputType": output_format,
-                            "geometryType": geometryType_filter,
-                            "filters": {
-                                "tags": {"all_geometry": osmTags},
-                                "attributes": {"all_geometry": columns},
-                            },
+
+                    attribute_meta = (
+                        {"all_geometry": columns}
+                        if columns
+                        else {
+                            "point": point_columns,
+                            "line": line_columns,
+                            "polygon": poly_columns,
                         }
-                    else:
-                        request_body = {
-                            "fileName": self.file_name,
-                            "geometry": geom,
-                            "outputType": output_format,
-                            "geometryType": geometryType_filter,
-                            "osmTags": osmTags,
-                            "filters": {
-                                "tags": {"all_geometry": osmTags},
-                                "attributes": {
-                                    "point": point_columns,
-                                    "line": line_columns,
-                                    "polygon": poly_columns,
-                                },
-                            },
-                        }
+                    )
+
+                    request_body = {
+                        "fileName": self.file_name,
+                        "geometry": geom,
+                        "outputType": output_format,
+                        "geometryType": geometryType_filter,
+                        "filters": {
+                            "tags": {"all_geometry": osmTags},
+                            "attributes": attribute_meta,
+                        },
+                    }
                 else:
                     if columns:
                         request_body = {
@@ -819,6 +812,7 @@ class Galaxy:
                         print(f"Rate limited, retrying in {RETRY_DELAY} seconds...")
                         time.sleep(RETRY_DELAY)
                     elif r.status_code != 200:  # Unexpected status code
+                        print(json.dumps(request_body))
                         r.raise_for_status()
                     else:  # Success
                         break
