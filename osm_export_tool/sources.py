@@ -509,14 +509,11 @@ class Galaxy:
 
         return filter_dict
 
-    def __init__(
-        self, hostname, geom, mapping=None, file_name="", country_export=False
-    ):
+    def __init__(self, hostname, geom, mapping=None, file_name=""):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping
         self.file_name = file_name
-        self.country_export = country_export
 
     def fetch(self, output_format, is_hdx_export=False, all_feature_filter_json=None):
         if all_feature_filter_json:
@@ -617,11 +614,6 @@ class Galaxy:
                                         },
                                     },
                                 }
-                        if self.country_export:
-                            print("Mode: country_export")
-                            c_e = {"country_export": self.country_export}
-                            # appending the data
-                            request_body.update(c_e)
                         # sending post request and saving response as response object
                         headers = {
                             "accept": "application/json",
