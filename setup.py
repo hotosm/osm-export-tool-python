@@ -14,7 +14,7 @@ requirements = [
 
 setuptools.setup(
     name="osm-export-tool-python",
-    version="2.0.7",
+    version="2.0.8",
     author="Hot Tech Team",
     author_email="sysadmin@hotosm.org",
     description="Convert OpenStreetMap data into GIS and mobile mapping file formats.",

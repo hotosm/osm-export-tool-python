@@ -308,7 +308,6 @@ class Overpass:
                 data=data,
                 stream=True,
             ) as r:
-
                 with open(self.tmp_path, "wb") as f:
                     shutil.copyfileobj(r.raw, f)
 
@@ -651,7 +650,22 @@ class Galaxy:
                                         )
                                         time.sleep(RETRY_DELAY)
                                     elif r.status_code != 200:  # Unexpected status code
-                                        r.raise_for_status()
+                                        if r.status_code == 422:  # Unprocessable Entity
+                                            try:
+                                                error_message = r.json().get("detail")[
+                                                    0
+                                                ]["msg"]
+                                            except (
+                                                json.JSONDecodeError,
+                                                KeyError,
+                                                IndexError,
+                                            ):
+                                                error_message = "Unknown error occurred"
+                                            raise ValueError(
+                                                f"Error {r.status_code}: {error_message}"
+                                            )
+                                        else:
+                                            r.raise_for_status()  # Raise other non-200 errors
                                     else:  # Success
                                         break
                                 if r.ok:
@@ -709,7 +723,6 @@ class Galaxy:
                 if (
                     osmTags
                 ):  # if it is a master filter i.e. filter same for all type of feature
-
                     attribute_meta = (
                         {"all_geometry": columns}
                         if columns
