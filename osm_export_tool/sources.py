@@ -508,11 +508,12 @@ class Galaxy:
 
         return filter_dict
 
-    def __init__(self, hostname, geom, mapping=None, file_name=""):
+    def __init__(self, hostname, geom, mapping=None, file_name="", access_token=None):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping
         self.file_name = file_name
+        self.access_token = access_token
 
     def fetch(self, output_format, is_hdx_export=False, all_feature_filter_json=None):
         if all_feature_filter_json:
@@ -614,10 +615,13 @@ class Galaxy:
                                     },
                                 }
                         # sending post request and saving response as response object
+
                         headers = {
                             "accept": "application/json",
                             "Content-Type": "application/json",
                         }
+                        if self.access_token:
+                            headers["access-token"] = self.access_token
                         # print(request_body)
                         try:
                             if all_feature_filter_json:
@@ -636,6 +640,7 @@ class Galaxy:
                             with requests.Session() as req_session:
                                 # print("printing before sending")
                                 # print(json.dumps(request_body))
+                                request_body["uuid"] = "false"
                                 for retry in range(MAX_RETRIES):
                                     r = req_session.post(
                                         url=f"{self.hostname}v1/snapshot/",
@@ -800,6 +805,8 @@ class Galaxy:
             }
 
         headers = {"accept": "application/json", "Content-Type": "application/json"}
+        if self.access_token:
+            headers["access-token"] = self.access_token
         # print(request_body)
         try:
             with requests.Session() as req_session:
