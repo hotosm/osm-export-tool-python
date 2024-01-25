@@ -850,12 +850,13 @@ class Galaxy:
                     r.raise_for_status()
                     if r.ok:
                         res = r.json()
-                        if res["status"] == "FAILURE":
+                        if res.get("status") == "FAILURE":
                             raise ValueError("Task failed from raw data api")
-                        if res["status"] == "SUCCESS":
-                            if res['result'].get('download_url'):
-                                success = True
-                                return [res["result"]]
+                        if res.get("status") == "SUCCESS":
+                            if res.get('result'):
+                                if res['result'].get('download_url'):
+                                    success = True
+                                    return [res["result"]]
                         time.sleep(1)  # Check each 1 seconds
 
         except requests.exceptions.RequestException as ex:
