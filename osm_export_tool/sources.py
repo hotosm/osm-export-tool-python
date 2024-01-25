@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import ast
 import shutil
 import subprocess
 import time
@@ -528,6 +529,11 @@ class Galaxy:
                 all_features_filters = json.loads(all_features.read())
         geom = shapely.geometry.mapping(self.geom)
 
+        def format_response(res_item):
+            if isinstance(res_item, str):
+                return ast.literal_eval(res_item)
+            return res_item
+
         if self.mapping:
             if is_hdx_export:
                 # hdx block
@@ -854,9 +860,10 @@ class Galaxy:
                             raise ValueError("Task failed from raw data api")
                         if res.get("status") == "SUCCESS":
                             if res.get('result'):
-                                if res['result'].get('download_url'):
+                                result=format_response(res['result'])
+                                if result.get('download_url'):
                                     success = True
-                                    return [res["result"]]
+                                    return [result]
                         time.sleep(1)  # Check each 1 seconds
 
         except requests.exceptions.RequestException as ex:
