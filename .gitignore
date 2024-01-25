@@ -11,3 +11,4 @@ dist
 files
 examples/tmp
 examples/tools
+.env

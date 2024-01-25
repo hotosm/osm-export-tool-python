@@ -694,7 +694,8 @@ class Galaxy:
                                         res = r.json()
                                         if res["status"] == "FAILURE":
                                             raise ValueError(
-                                                "Task failed from Raw Data api"
+
+                                                "Task failed from raw data api"
                                             )
                                         if res["status"] == "SUCCESS":
                                             success = True
@@ -705,7 +706,7 @@ class Galaxy:
                                             time.sleep(
                                                 0.5
                                             )  # wait one half sec before making another request
-                                        else:
+                                        else : 
                                             time.sleep(2)  # Check every 2s for hdx
 
                         except requests.exceptions.RequestException as ex:
@@ -850,12 +851,12 @@ class Galaxy:
                     if r.ok:
                         res = r.json()
                         if res["status"] == "FAILURE":
-                            raise ValueError("Task failed from export tool api")
+                            raise ValueError("Task failed from raw data api")
                         if res["status"] == "SUCCESS":
-                            success = True
-                            return [res["result"]]
-                        else:
-                            time.sleep(1)  # Check each 1 seconds
+                            if res['result'].get('download_url'):
+                                success = True
+                                return [res["result"]]
+                        time.sleep(1)  # Check each 1 seconds
 
         except requests.exceptions.RequestException as ex:
             raise ex
