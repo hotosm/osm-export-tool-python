@@ -515,7 +515,14 @@ class Galaxy:
         self.file_name = file_name
         self.access_token = access_token
 
-    def fetch(self, output_format, is_hdx_export=False, all_feature_filter_json=None):
+    def fetch(
+        self,
+        output_format,
+        is_hdx_export=False,
+        all_feature_filter_json=None,
+        min_zoom=None,
+        max_zoom=None,
+    ):
         if all_feature_filter_json:
             with open(all_feature_filter_json, encoding="utf-8") as all_features:
                 all_features_filters = json.loads(all_features.read())
@@ -687,6 +694,7 @@ class Galaxy:
                                         res = r.json()
                                         if res["status"] == "FAILURE":
                                             raise ValueError(
+
                                                 "Task failed from raw data api"
                                             )
                                         if res["status"] == "SUCCESS":
@@ -803,7 +811,9 @@ class Galaxy:
                 "geometry": geom,
                 "outputType": output_format,
             }
-
+        if output_format == "mbtiles":
+            request_body["minZoom"] = min_zoom
+            request_body["maxZoom"] = max_zoom
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         if self.access_token:
             headers["access-token"] = self.access_token
