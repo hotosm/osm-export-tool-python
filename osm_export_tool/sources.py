@@ -820,6 +820,8 @@ class Galaxy:
         if output_format == "mbtiles":
             request_body["minZoom"] = min_zoom
             request_body["maxZoom"] = max_zoom
+        else : # use stintersects
+            request_body["useStWithin"]= False
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         if self.access_token:
             headers["access-token"] = self.access_token
