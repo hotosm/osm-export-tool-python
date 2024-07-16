@@ -79,7 +79,7 @@ def garmin(input_pbf,splitter_jar,mkgmap_jar,tempdir=None,jvm_mem=[256,2048]):
         '--description="HOT Export Garmin Map"',
         '--mapname=80000111',
         '--family-name="HOT Export Tool"',
-        '--family-id="2"',
+        '--family-id=2',
         '--series-name="HOT Export Tool"',
         '--index',
         '--route',
