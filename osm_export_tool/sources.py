@@ -509,12 +509,13 @@ class Galaxy:
 
         return filter_dict
 
-    def __init__(self, hostname, geom, mapping=None, file_name="", access_token=None):
+    def __init__(self, hostname, geom, mapping=None, file_name="", access_token=None,userinfo=False):
         self.hostname = hostname
         self.geom = geom
         self.mapping = mapping
         self.file_name = file_name
         self.access_token = access_token
+        self.userinfo=userinfo
 
     def fetch(
         self,
@@ -817,11 +818,12 @@ class Galaxy:
                 "geometry": geom,
                 "outputType": output_format,
             }
-        if output_format == "mbtiles":
+        if output_format in ["mbtiles","pmtiles","mvt"]:
             request_body["minZoom"] = min_zoom
             request_body["maxZoom"] = max_zoom
         else : # use stintersects
             request_body["useStWithin"]= False
+        request_body['includeUserMetadata'] = self.userinfo
         headers = {"accept": "application/json", "Content-Type": "application/json"}
         if self.access_token:
             headers["access-token"] = self.access_token
