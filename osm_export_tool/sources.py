@@ -485,6 +485,8 @@ class Galaxy:
     @classmethod
     def attribute_filter(cls, theme):
         columns = theme.keys
+        if '*' in columns or 'all' in columns:
+            return []
         return list(columns)
 
     @classmethod
